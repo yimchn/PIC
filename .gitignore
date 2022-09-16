@@ -1,0 +1,5 @@
+# 忽略
+.cache/
+build/
+results/
+cmake-build-debug/
