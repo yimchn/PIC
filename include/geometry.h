@@ -4,8 +4,6 @@
 
 #include "field.h"
 
-enum TYPE { BOUNDARY, PML, INNER };
-
 struct Geometry {
     // mesh geometry
     const int ni;  // number of nodes
@@ -15,7 +13,6 @@ struct Geometry {
     const int n_pml_yn;
     const int n_pml_yp;
     const Vec2i nn;  // another way to access node counts
-    TYPE node_type;
 
     Vec2d dh;  // cell spacing
     Vec2d x0;  // mesh origin
@@ -45,8 +42,6 @@ struct Geometry {
 
     /*functions to set mesh origin and spacing*/
     void SetExtents(const Vec2d x0, const Vec2d xm);
-
-    void SetBoundary();
 
     bool InBounds(Vec2d pos);
 

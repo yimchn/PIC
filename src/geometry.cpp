@@ -4,12 +4,11 @@ Geometry::Geometry()
     : ni{26},
       nj{26},
       nn{26, 26},
-      n_pml_xn(10),
-      n_pml_xp(10),
-      n_pml_yn(10),
-      n_pml_yp(10),
-      node_area{26, 26},
-      node_type(INNER) {}
+      n_pml_xn(5),
+      n_pml_xp(5),
+      n_pml_yn(5),
+      n_pml_yp(5),
+      node_area{26, 26} {}
 
 Geometry::Geometry(int ni, int nj)
     : ni{ni},
@@ -19,8 +18,7 @@ Geometry::Geometry(int ni, int nj)
       n_pml_xp(10),
       n_pml_yn(10),
       n_pml_yp(10),
-      node_area{ni, nj},
-      node_type(INNER) {}
+      node_area{ni, nj} {}
 
 // int Geometry::GetNi() const { return ni; }
 
@@ -73,13 +71,4 @@ void Geometry::SetExtents(Vec2d _x0, Vec2d _xm) {
 
     /*recompute node volumes*/
     ComputeNodeAreas();
-}
-
-void Geometry::SetBoundary() {
-#pragma omp parallel for
-    for (int i = 5; i < 21; i++) {
-        for (int j = 5; j < 21; j++) {
-            if (i == 5 || j == 5 || i == 20 && j == 20) node_type = BOUNDARY;
-        }
-    }
 }

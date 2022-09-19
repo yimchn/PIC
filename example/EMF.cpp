@@ -11,7 +11,8 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     double f = 3e5;  // frenquency, Hz
-    int step = 150000;
+                     //    int step = 150000;
+    int step = 400;
     double I = 100;
 
     Geometry geo;
@@ -28,6 +29,7 @@ int main(int argc, char *argv[]) {
         //           << std::endl;
         domain.UpdateBoundary(I, f);
         solver.UpdateElectromagnetic();
+        //        if (domain.ts % 10000 == 0) Output::fields(domain);
         Output::fields(domain);
     }
     std::cout << "Calculation complete" << std::endl;

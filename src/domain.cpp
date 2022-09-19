@@ -1,6 +1,7 @@
 #include <math.h>
 
 #include "const.h"
+#include "geometry.h"
 #include "species.h"
 
 /*constructor*/
@@ -73,19 +74,38 @@ double Domain::getPE() {
 void Domain::UpdateBoundary(double I, double f) {
     double t = getTime();
 
+// 设置电流边界
 #pragma omp parallel for
-    for (int i = 0; i < geo.ni; i++) {
-#pragma omp parallel for
-        for (int j = 0; j < geo.nj; j++) {
-            // J[0][j][2] = I * sin(2 * Const::PI * f * t);
-            // J[nj - 1][j][2] = -I * sin(2 * Const::PI * f * t);
-            // J[i][0][2] = I * cos(2 * Const::PI * f * t);
-            // J[i][ni - 1][2] = -I * cos(2 * Const::PI * f * t);
-
-            J[1][j][2] = I * sin(2 * Const::PI * f * t);
-            J[geo.ni - 2][j][2] = -I * sin(2 * Const::PI * f * t);
-            J[i][1][2] = I * cos(2 * Const::PI * f * t);
-            J[i][geo.nj - 2][2] = -I * cos(2 * Const::PI * f * t);
+    for (int i = 6; i < 20; i++) {
+        for (int j = 6; j < 20; j++) {
+            J[5][j][2] = -I * sin(2 * Const::PI * f * t);
+            J[20][j][2] = I * sin(2 * Const::PI * f * t);
+            J[i][5][2] = -I * cos(2 * Const::PI * f * t);
+            J[i][20][2] = I * cos(2 * Const::PI * f * t);
         }
     }
+
+#pragma omp parallel for
+    for (int i = 0; i < geo.n_pml_xn; i++)
+        for (int j = 0; j < geo.nj; j++) {
+            //            node_type[i][j] = PML_XN;
+        }
+
+#pragma omp parallel for
+    for (int i = geo.ni; i > geo.ni - geo.n_pml_xp; i--)
+        for (int j = 0; j < geo.nj; j++) {
+            //            geo.node_type[i][j] = PML_XP;
+        }
+
+#pragma omp parallel for
+    for (int i = 0; i < geo.ni; i++)
+        for (int j = 0; j < geo.n_pml_yn; j++) {
+            //            node_type[i][j] = PML_YN;
+        }
+
+#pragma omp parallel for
+    for (int i = 0; i < geo.ni; i++)
+        for (int j = geo.nj; j > geo.nj - geo.n_pml_yp; j--) {
+            //            node_type[i][j] = PML_YP;
+        }
 }

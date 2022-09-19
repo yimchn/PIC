@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 set(PROJECT_NAME ELF)
 project(${PROJECT_NAME})
 
-# set(CMAKE_CXX_FLAGS "-fopenmp")
+set(CMAKE_CXX_FLAGS "-fopenmp")
 
 # 添加源文件目录
 include_directories(${PROJECT_SOURCE_DIR}/include)
