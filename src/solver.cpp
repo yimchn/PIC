@@ -9,6 +9,79 @@
 
 Solver::Solver(Domain &domain, int max_it, double tol)
     : domain(domain), max_solver_it(max_it), tolerance(tol) {
+    Allocate(domain);
+    CalculFdtdPara(domain);
+    CalculFdtdCoeff(domain);
+}
+void Solver::CalculFdtdCoeff(Domain &domain) {
+    CD_dt = domain.getDt();
+    CD_dt_dx = domain.getDt() / domain.geo.dh[0];
+    CD_dt_dy = domain.getDt() / domain.geo.dh[1];
+
+    CB_dt = domain.getDt();
+    CB_dt_dx = domain.getDt() / domain.geo.dh[0];
+    CB_dt_dy = domain.getDt() / domain.geo.dh[1];
+
+    C_Dx_dyn_v = CD_dt_dy / kappa_e_yn;
+    C_Dx_dyp_v = CD_dt_dy / kappa_max_yp;
+
+    // PML区域内Dx的更新公式系数
+    temp_dx.setConstant(1);
+    for (int i = 0; i < domain.geo.n_pml_yn; ++i) {
+        b_ex_yn.col(i) = b_e_yn_v(i) * temp_dx;
+        a_ex_yn.col(i) = a_e_yn_v(i) * temp_dx;
+        C_Dx_dyn.col(i) = C_Dx_dyn_v(i) * temp_dx;
+    }
+    for (int i = 0; i < domain.geo.n_pml_yp; ++i) {
+        b_ex_yp.col(i) = b_e_yp_v(i) * temp_dx;
+        a_ex_yp.col(i) = a_e_yp_v(i) * temp_dx;
+        C_Dx_dyp.col(i) = C_Dx_dyp_v(i) * temp_dx;
+    }
+
+    // PML区域内Dy的公式更新系数
+    C_Dy_dxn_v = CD_dt_dx / kappa_e_xn;
+    C_Dy_dxp_v = CD_dt_dx / kappa_e_xp;
+
+    temp_dy.setConstant(1);
+    for (int i = 0; i < domain.geo.n_pml_xn; ++i) {
+        b_ey_xn.row(i) = b_e_xn_v(i) * temp_dy;
+        a_ey_xn.row(i) = a_e_xn_v(i) * temp_dy;
+        C_Dy_dxn.row(i) = C_Dy_dxn_v(i) * temp_dy;
+    }
+    for (int i = 0; i < domain.geo.n_pml_xp; ++i) {
+        b_ey_xp.row(i) = b_e_xp_v(i) * temp_dy;
+        a_ey_xp.row(i) = a_e_xp_v(i) * temp_dy;
+        C_Dy_dxp.row(i) = C_Dy_dxp_v(i) * temp_dy;
+    }
+
+    // PML区域内By的更新公式系数
+    temp_bz.setConstant(1);
+    for (int i = 0; i < domain.geo.n_pml_xn; ++i) {
+        b_mz_xn.row(i) = b_m_xn_v(i) * temp_bz;
+        a_mz_xn.row(i) = a_m_xn_v(i) * temp_bz;
+        C_Bz_dxn.row(i) = C_Bz_dxn_v(i) * temp_bz;
+    }
+    for (int i = 0; i < domain.geo.n_pml_xp; ++i) {
+        b_mz_xp.row(i) = b_m_xp_v(i) * temp_bz;
+        a_mz_xp.row(i) = a_m_xp_v(i) * temp_bz;
+        C_Bz_dxp.row(i) = C_Bz_dxp_v(i) * temp_bz;
+    }
+
+    temp_bz.resize(domain.geo.ni);
+    temp_bz.setConstant(1);
+    for (int i = 0; i < domain.geo.n_pml_yn; ++i) {
+        b_mz_yn.col(i) = b_m_yn_v(i) * temp_bz;
+        a_mz_yn.col(i) = a_m_yn_v(i) * temp_bz;
+        C_Bz_dyn.col(i) = C_Bz_dyn_v(i) * temp_bz;
+    }
+    for (int i = 0; i < domain.geo.n_pml_xp; ++i) {
+        b_mz_xp.col(i) = b_m_yp_v(i) * temp_bz;
+        a_mz_xp.col(i) = a_m_yp_v(i) * temp_bz;
+        C_Bz_dxp.col(i) = C_Bz_dyp_v(i) * temp_bz;
+    }
+}
+
+void Solver::CalculFdtdPara(Domain &domain) {
     // 计算电磁场量节点离开PML内边界的距离
     // x轴方向
     for (double i = domain.geo.n_pml_xn - 0.75; i > 0.25; i--)
@@ -51,141 +124,229 @@ Solver::Solver(Domain &domain, int max_it, double tol)
         sigma_factor_yp * (m_pml + 1) /
         (150 * Const::PI * sqrt(eps_r_pml_yp * mu_r_pml_yp) * domain.geo.dh[1]);
 
-    for (int i = 0; i < domain.geo.n_pml_xn; i++) {
-        sigma_e_xn[i] = sigma_max_xn * pow(rho_e_xn[i], m_pml);
-        sigma_m_xn[i] =
-            Const::MU_0 / Const::EPS_0 * sigma_max_xn * pow(rho_m_xn[i], m_pml);
-    }
+    sigma_e_xn = sigma_max_xn * pow(rho_e_xn, m_pml);
+    sigma_m_xn =
+        Const::MU_0 / Const::EPS_0 * sigma_max_xn * pow(rho_m_xn, m_pml);
+    //    for (int i = 0; i < domain.geo.n_pml_xn; i++) {
+    //        sigma_e_xn[i] = sigma_max_xn * pow(rho_e_xn[i], m_pml);
+    //        sigma_m_xn[i] =
+    //            Const::MU_0 / Const::EPS_0 * sigma_max_xn * pow(rho_m_xn[i],
+    //            m_pml);
+    //    }
 
-    for (int i = 0; i < domain.geo.n_pml_xp; i++) {
-        sigma_e_xp[i] = sigma_max_xp * pow(rho_e_xp[i], m_pml);
-        sigma_m_xp[i] =
-            Const::MU_0 / Const::EPS_0 * sigma_max_xp * pow(rho_m_xp[i], m_pml);
-    }
+    sigma_e_xp = sigma_max_xp * pow(rho_e_xp, m_pml);
+    sigma_m_xp =
+        Const::MU_0 / Const::EPS_0 * sigma_max_xp * pow(rho_m_xp, m_pml);
 
-    for (int i = 0; i < domain.geo.n_pml_yn; i++) {
-        sigma_e_yn[i] = sigma_max_yn * pow(rho_e_yn[i], m_pml);
-        sigma_m_yn[i] =
-            Const::MU_0 / Const::EPS_0 * sigma_max_yn * pow(rho_m_yn[i], m_pml);
-    }
+    sigma_e_yn = sigma_max_yn * pow(rho_e_yn, m_pml);
+    sigma_m_yn =
+        Const::MU_0 / Const::EPS_0 * sigma_max_yn * pow(rho_m_yn, m_pml);
 
-    for (int i = 0; i < domain.geo.n_pml_yp; i++) {
-        sigma_e_yp[i] = sigma_max_yp * pow(rho_e_yp[i], m_pml);
-        sigma_m_yp[i] =
-            Const::MU_0 / Const::EPS_0 * sigma_max_yp * pow(rho_m_yp[i], m_pml);
-    }
+    sigma_e_yp = sigma_max_yp * pow(rho_e_yp, m_pml);
+    sigma_m_yp =
+        Const::MU_0 / Const::EPS_0 * sigma_max_yp * pow(rho_m_yp, m_pml);
 
     // 设置kappa参数
-    for (int i = 0; i < domain.geo.n_pml_xn; i++) {
-        kappa_e_xn[i] = 1 + (kappa_max_xn - 1) * pow(rho_e_xn[i], m_pml);
-        kappa_m_xn[i] = 1 + (kappa_max_xn - 1) * pow(rho_m_xn[i], m_pml);
-    }
+    kappa_e_xn = 1 + (kappa_max_xn - 1) * pow(rho_e_xn, m_pml);
+    kappa_m_xn = 1 + (kappa_max_xn - 1) * pow(rho_m_xn, m_pml);
 
-    for (int i = 0; i < domain.geo.n_pml_xp; i++) {
-        kappa_e_xp[i] = 1 + (kappa_max_xp - 1) * pow(rho_e_xp[i], m_pml);
-        kappa_m_xp[i] = 1 + (kappa_max_xp - 1) * pow(rho_m_xp[i], m_pml);
-    }
+    kappa_e_xp = 1 + (kappa_max_xp - 1) * pow(rho_e_xp, m_pml);
+    kappa_m_xp = 1 + (kappa_max_xp - 1) * pow(rho_m_xp, m_pml);
 
-    for (int i = 0; i < domain.geo.n_pml_yn; i++) {
-        kappa_e_yn[i] = 1 + (kappa_max_yn - 1) * pow(rho_e_yn[i], m_pml);
-        kappa_m_yn[i] = 1 + (kappa_max_yn - 1) * pow(rho_m_yn[i], m_pml);
-    }
+    kappa_e_yn = 1 + (kappa_max_yn - 1) * pow(rho_e_yn, m_pml);
+    kappa_m_yn = 1 + (kappa_max_yn - 1) * pow(rho_m_yn, m_pml);
 
-    for (int i = 0; i < domain.geo.n_pml_yp; i++) {
-        kappa_e_yp[i] = 1 + (kappa_max_yp - 1) * pow(rho_e_yp[i], m_pml);
-        kappa_m_yp[i] = 1 + (kappa_max_yp - 1) * pow(rho_m_yp[i], m_pml);
-    }
+    kappa_e_yp = 1 + (kappa_max_yp - 1) * pow(rho_e_yp, m_pml);
+    kappa_m_yp = 1 + (kappa_max_yp - 1) * pow(rho_m_yp, m_pml);
 
     // 设置alpha参数
-    for (int i = 0; i < domain.geo.n_pml_xn; i++) {
-        alpha_e_xn[i] = alpha_max * (1 - rho_e_xn[i]);
-        alpha_m_xn[i] =
-            Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_xn[i]);
-    }
+    alpha_e_xn = alpha_max * (1 - rho_e_xn);
+    alpha_m_xn = Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_xn);
 
-    for (int i = 0; i < domain.geo.n_pml_xp; i++) {
-        alpha_e_xp[i] = alpha_max * (1 - rho_e_xp[i]);
-        alpha_m_xp[i] =
-            Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_xp[i]);
-    }
+    alpha_e_xp = alpha_max * (1 - rho_e_xp);
+    alpha_m_xp = Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_xp);
 
-    for (int i = 0; i < domain.geo.n_pml_yn; i++) {
-        alpha_e_yn[i] = alpha_max * (1 - rho_e_yn[i]);
-        alpha_m_yn[i] =
-            Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_yn[i]);
-    }
+    alpha_e_yn = alpha_max * (1 - rho_e_yn);
+    alpha_m_yn = Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_yn);
 
-    for (int i = 0; i < domain.geo.n_pml_yp; i++) {
-        alpha_e_yp[i] = alpha_max * (1 - rho_e_yp[i]);
-        alpha_m_yp[i] =
-            Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_yp[i]);
-    }
+    alpha_e_yp = alpha_max * (1 - rho_e_yp);
+    alpha_m_yp = Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_yp);
 
     // b
-    for (int i = 0; i < domain.geo.n_pml_xn; i++) {
-        b_e_xn_v[i] = exp(-(sigma_e_xn[i] / kappa_e_xn[i] + alpha_e_xn[i]) *
-                          domain.getDt() / Const::EPS_0);
-        b_m_xn_v[i] = exp(-(sigma_m_xn[i] / kappa_m_xn[i] + alpha_m_xn[i]) *
-                          domain.getDt() / Const::MU_0);
-    }
+    b_e_xn_v = exp(-(sigma_e_xn / kappa_e_xn + alpha_e_xn) * domain.getDt() /
+                   Const::EPS_0);
+    b_m_xn_v = exp(-(sigma_m_xn / kappa_m_xn + alpha_m_xn) * domain.getDt() /
+                   Const::MU_0);
 
-    for (int i = 0; i < domain.geo.n_pml_xp; i++) {
-        b_e_xp_v[i] = exp(-(sigma_e_xp[i] / kappa_e_xp[i] + alpha_e_xp[i]) *
-                          domain.getDt() / Const::EPS_0);
-        b_m_xp_v[i] = exp(-(sigma_m_xp[i] / kappa_m_xp[i] + alpha_m_xp[i]) *
-                          domain.getDt() / Const::MU_0);
-    }
+    b_e_xp_v = exp(-(sigma_e_xp / kappa_e_xp + alpha_e_xp) * domain.getDt() /
+                   Const::EPS_0);
+    b_m_xp_v = exp(-(sigma_m_xp / kappa_m_xp + alpha_m_xp) * domain.getDt() /
+                   Const::MU_0);
 
-    for (int i = 0; i < domain.geo.n_pml_yn; i++) {
-        b_e_yn_v[i] = exp(-(sigma_e_yn[i] / kappa_e_yn[i] + alpha_e_yn[i]) *
-                          domain.getDt() / Const::EPS_0);
-        b_m_yn_v[i] = exp(-(sigma_m_yn[i] / kappa_m_yn[i] + alpha_m_yn[i]) *
-                          domain.getDt() / Const::MU_0);
-    }
+    b_e_yn_v = exp(-(sigma_e_yn / kappa_e_yn + alpha_e_yn) * domain.getDt() /
+                   Const::EPS_0);
+    b_m_yn_v = exp(-(sigma_m_yn / kappa_m_yn + alpha_m_yn) * domain.getDt() /
+                   Const::MU_0);
 
-    for (int i = 0; i < domain.geo.n_pml_yp; i++) {
-        b_e_yp_v[i] = exp(-(sigma_e_yp[i] / kappa_e_yp[i] + alpha_e_yp[i]) *
-                          domain.getDt() / Const::EPS_0);
-        b_m_yp_v[i] = exp(-(sigma_m_yp[i] / kappa_m_yp[i] + alpha_m_yp[i]) *
-                          domain.getDt() / Const::MU_0);
-    }
+    b_e_yp_v = exp(-(sigma_e_yp / kappa_e_yp + alpha_e_yp) * domain.getDt() /
+                   Const::EPS_0);
+    b_m_yp_v = exp(-(sigma_m_yp / kappa_m_yp + alpha_m_yp) * domain.getDt() /
+                   Const::MU_0);
 
     // a
-    for (int i = 0; i < domain.geo.n_pml_xn; i++) {
-        a_e_xn_v[i] = sigma_e_xn[i] * (b_e_xn_v[i] - 1) /
-                      (domain.geo.dh[0] * kappa_e_xn[i] *
-                       (sigma_e_xn[i] + alpha_e_xn[i] * kappa_e_xn[i]));
-        a_m_xn_v[i] = sigma_m_xn[i] * (b_m_xn_v[i] - 1) /
-                      (domain.geo.dh[0] * kappa_m_xn[i] *
-                       (sigma_m_xn[i] + alpha_m_xn[i] * kappa_m_xn[i]));
-    }
+    a_e_xn_v = sigma_e_xn * (b_e_xn_v - 1) /
+               (domain.geo.dh[0] * kappa_e_xn *
+                (sigma_e_xn + alpha_e_xn * kappa_e_xn));
+    a_m_xn_v = sigma_m_xn * (b_m_xn_v - 1) /
+               (domain.geo.dh[0] * kappa_m_xn *
+                (sigma_m_xn + alpha_m_xn * kappa_m_xn));
 
-    for (int i = 0; i < domain.geo.n_pml_xp; i++) {
-        a_e_xp_v[i] = sigma_e_xp[i] * (b_e_xp_v[i] - 1) /
-                      (domain.geo.dh[0] * kappa_e_xp[i] *
-                       (sigma_e_xp[i] + alpha_e_xp[i] * kappa_e_xp[i]));
-        a_m_xp_v[i] = sigma_m_xp[i] * (b_m_xp_v[i] - 1) /
-                      (domain.geo.dh[0] * kappa_m_xp[i] *
-                       (sigma_m_xp[i] + alpha_m_xp[i] * kappa_m_xp[i]));
-    }
+    a_e_xp_v = sigma_e_xp * (b_e_xp_v - 1) /
+               (domain.geo.dh[0] * kappa_e_xp *
+                (sigma_e_xp + alpha_e_xp * kappa_e_xp));
+    a_m_xp_v = sigma_m_xp * (b_m_xp_v - 1) /
+               (domain.geo.dh[0] * kappa_m_xp *
+                (sigma_m_xp + alpha_m_xp * kappa_m_xp));
 
-    for (int i = 0; i < domain.geo.n_pml_yn; i++) {
-        a_e_yn_v[i] = sigma_e_yn[i] * (b_e_yn_v[i] - 1) /
-                      (domain.geo.dh[0] * kappa_e_yn[i] *
-                       (sigma_e_yn[i] + alpha_e_yn[i] * kappa_e_yn[i]));
-        a_m_yn_v[i] = sigma_m_yn[i] * (b_m_yn_v[i] - 1) /
-                      (domain.geo.dh[0] * kappa_m_yn[i] *
-                       (sigma_m_yn[i] + alpha_m_yn[i] * kappa_m_yn[i]));
-    }
+    a_e_yn_v = sigma_e_yn * (b_e_yn_v - 1) /
+               (domain.geo.dh[0] * kappa_e_yn *
+                (sigma_e_yn + alpha_e_yn * kappa_e_yn));
+    a_m_yn_v = sigma_m_yn * (b_m_yn_v - 1) /
+               (domain.geo.dh[0] * kappa_m_yn *
+                (sigma_m_yn + alpha_m_yn * kappa_m_yn));
 
-    for (int i = 0; i < domain.geo.n_pml_yp; i++) {
-        a_e_yp_v[i] = sigma_e_yp[i] * (b_e_yp_v[i] - 1) /
-                      (domain.geo.dh[0] * kappa_e_yp[i] *
-                       (sigma_e_yp[i] + alpha_e_yp[i] * kappa_e_yp[i]));
-        a_m_yp_v[i] = sigma_m_yp[i] * (b_m_yp_v[i] - 1) /
-                      (domain.geo.dh[0] * kappa_m_yp[i] *
-                       (sigma_m_yp[i] + alpha_m_yp[i] * kappa_m_yp[i]));
-    }
+    a_e_yp_v = sigma_e_yp * (b_e_yp_v - 1) /
+               (domain.geo.dh[0] * kappa_e_yp *
+                (sigma_e_yp + alpha_e_yp * kappa_e_yp));
+    a_m_yp_v = sigma_m_yp * (b_m_yp_v - 1) /
+               (domain.geo.dh[0] * kappa_m_yp *
+                (sigma_m_yp + alpha_m_yp * kappa_m_yp));
+}
+
+void Solver::Allocate(Domain &domain) {
+    rho_e_xn.resize(domain.geo.n_pml_xn);
+    rho_e_xp.resize(domain.geo.n_pml_xp);
+    rho_m_xn.resize(domain.geo.n_pml_xn);
+    rho_m_xp.resize(domain.geo.n_pml_xp);
+
+    rho_e_yn.resize(domain.geo.n_pml_yn);
+    rho_e_yp.resize(domain.geo.n_pml_yp);
+    rho_m_yn.resize(domain.geo.n_pml_yn);
+    rho_m_yp.resize(domain.geo.n_pml_yp);
+
+    // sigma
+    sigma_e_xn.resize(domain.geo.n_pml_xn);
+    sigma_m_xn.resize(domain.geo.n_pml_xn);
+    sigma_e_xp.resize(domain.geo.n_pml_xp);
+    sigma_m_xp.resize(domain.geo.n_pml_xp);
+
+    sigma_e_yn.resize(domain.geo.n_pml_yn);
+    sigma_m_yn.resize(domain.geo.n_pml_yn);
+    sigma_e_yp.resize(domain.geo.n_pml_yp);
+    sigma_m_yp.resize(domain.geo.n_pml_yp);
+
+    // kappa
+    kappa_e_xn.resize(domain.geo.n_pml_xn);
+    kappa_e_xp.resize(domain.geo.n_pml_xp);
+    kappa_m_xn.resize(domain.geo.n_pml_xn);
+    kappa_m_xp.resize(domain.geo.n_pml_xp);
+
+    kappa_e_yn.resize(domain.geo.n_pml_yn);
+    kappa_e_yp.resize(domain.geo.n_pml_yp);
+    kappa_m_yn.resize(domain.geo.n_pml_yn);
+    kappa_m_yp.resize(domain.geo.n_pml_yp);
+
+    // alpha
+    alpha_e_xn.resize(domain.geo.n_pml_xn);
+    alpha_e_xp.resize(domain.geo.n_pml_xp);
+    alpha_m_xn.resize(domain.geo.n_pml_xn);
+    alpha_m_xp.resize(domain.geo.n_pml_xp);
+
+    alpha_e_yn.resize(domain.geo.n_pml_yn);
+    alpha_e_yp.resize(domain.geo.n_pml_yp);
+    alpha_m_yn.resize(domain.geo.n_pml_yn);
+    alpha_m_yp.resize(domain.geo.n_pml_yp);
+
+    // b
+    b_e_xn_v.resize(domain.geo.n_pml_xn);
+    b_e_xp_v.resize(domain.geo.n_pml_xp);
+    b_m_xn_v.resize(domain.geo.n_pml_xn);
+    b_m_xp_v.resize(domain.geo.n_pml_xp);
+
+    b_e_yn_v.resize(domain.geo.n_pml_yn);
+    b_e_yp_v.resize(domain.geo.n_pml_yp);
+    b_m_yn_v.resize(domain.geo.n_pml_yn);
+    b_m_yp_v.resize(domain.geo.n_pml_yp);
+
+    // a
+    a_e_xn_v.resize(domain.geo.n_pml_xn);
+    a_e_xp_v.resize(domain.geo.n_pml_xp);
+    a_m_xn_v.resize(domain.geo.n_pml_xn);
+    a_m_xp_v.resize(domain.geo.n_pml_xp);
+
+    a_e_yn_v.resize(domain.geo.n_pml_yn);
+    a_e_yp_v.resize(domain.geo.n_pml_yp);
+    a_m_yn_v.resize(domain.geo.n_pml_yn);
+    a_m_yp_v.resize(domain.geo.n_pml_yp);
+
+    // Coeff
+    C_Dx_dyn_v.resize(domain.geo.n_pml_yn);
+    C_Dx_dyp_v.resize(domain.geo.n_pml_yp);
+
+    Phi_ex_yn.resize(domain.geo.ni, domain.geo.n_pml_yn);
+    b_ex_yn.resize(domain.geo.ni, domain.geo.n_pml_yn);
+    a_ex_yn.resize(domain.geo.ni, domain.geo.n_pml_yn);
+    C_Dx_dyn.resize(domain.geo.ni, domain.geo.n_pml_yn);
+
+    Phi_ex_yp.resize(domain.geo.ni, domain.geo.n_pml_yp);
+    b_ex_yp.resize(domain.geo.ni, domain.geo.n_pml_yp);
+    a_ex_yp.resize(domain.geo.ni, domain.geo.n_pml_yp);
+    C_Dx_dyp.resize(domain.geo.ni, domain.geo.n_pml_yp);
+
+    temp_dx.resize(domain.geo.ni);
+
+    C_Dy_dxn_v.resize(domain.geo.n_pml_xn);
+    C_Dy_dxp_v.resize(domain.geo.n_pml_xp);
+
+    Phi_ey_xn.resize(domain.geo.n_pml_xn, domain.geo.nj);
+    b_ey_xn.resize(domain.geo.n_pml_xn, domain.geo.nj);
+    a_ey_xn.resize(domain.geo.n_pml_xn, domain.geo.nj);
+    C_Dy_dxn.resize(domain.geo.n_pml_xn, domain.geo.nj);
+
+    Phi_ey_xp.resize(domain.geo.n_pml_xp, domain.geo.nj);
+    b_ey_xp.resize(domain.geo.n_pml_xp, domain.geo.nj);
+    a_ey_xp.resize(domain.geo.n_pml_xp, domain.geo.nj);
+    C_Dy_dxp.resize(domain.geo.n_pml_xp, domain.geo.nj);
+
+    temp_dy.resize(domain.geo.nj);
+
+    C_Bz_dxn_v.resize(domain.geo.n_pml_xn);
+    C_Bz_dxp_v.resize(domain.geo.n_pml_xp);
+
+    C_Bz_dyn_v.resize(domain.geo.n_pml_yn);
+    C_Bz_dyp_v.resize(domain.geo.n_pml_yp);
+
+    Phi_mz_xn.resize(domain.geo.n_pml_xn, domain.geo.nj);
+    b_mz_xn.resize(domain.geo.n_pml_xn, domain.geo.nj);
+    b_mz_xn.resize(domain.geo.n_pml_xn, domain.geo.nj);
+    C_Bz_dxn.resize(domain.geo.n_pml_xn, domain.geo.nj);
+
+    Phi_mz_xp.resize(domain.geo.n_pml_xp, domain.geo.nj);
+    b_mz_xp.resize(domain.geo.n_pml_xp, domain.geo.nj);
+    b_mz_xp.resize(domain.geo.n_pml_xp, domain.geo.nj);
+    C_Bz_dxp.resize(domain.geo.n_pml_xp, domain.geo.nj);
+
+    temp_bz.resize(domain.geo.nj);
+
+    Phi_mz_yn.resize(domain.geo.ni, domain.geo.n_pml_yn);
+    b_mz_yn.resize(domain.geo.ni, domain.geo.n_pml_yn);
+    b_mz_yn.resize(domain.geo.ni, domain.geo.n_pml_yn);
+    C_Bz_dyn.resize(domain.geo.ni, domain.geo.n_pml_yn);
+
+    Phi_mz_xp.resize(domain.geo.ni, domain.geo.n_pml_yp);
+    b_mz_xp.resize(domain.geo.ni, domain.geo.n_pml_yp);
+    b_mz_xp.resize(domain.geo.ni, domain.geo.n_pml_yp);
+    C_Bz_dxp.resize(domain.geo.ni, domain.geo.n_pml_yp);
 }
 
 /*solves Poisson equation using Gauss-Seidel*/

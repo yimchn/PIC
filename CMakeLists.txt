@@ -5,6 +5,8 @@ project(${PROJECT_NAME})
 
 set(CMAKE_CXX_FLAGS "-fopenmp")
 
+find_package(Eigen3 CONFIG REQUIRED)
+
 # 添加源文件目录
 include_directories(${PROJECT_SOURCE_DIR}/include)
 aux_source_directory(${PROJECT_SOURCE_DIR}/src SRC_DIR)
@@ -17,3 +19,6 @@ add_executable(EMF ${SRC_DIR} example/EMF.cpp)
 
 # 测试程序
 add_executable(TEST test/test.cpp)
+
+target_link_libraries(TEST PRIVATE Eigen3::Eigen)
+target_link_libraries(EMF PRIVATE Eigen3::Eigen)

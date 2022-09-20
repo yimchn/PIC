@@ -1,15 +1,13 @@
 #pragma once
 
-#include <array>
-#include <memory>
+#include <Eigen/Core>
+#include <unsupported/Eigen/CXX11/Tensor>
 
 #include "const.h"
 #include "domain.h"
 
-#define N_PML_XN 20;
-#define N_PML_XP 20;
-#define N_PML_YN 20;
-#define N_PML_YP 20;
+using vector = Eigen::ArrayXd;
+using matrix = Eigen::MatrixXd;
 
 struct Solver {
     Domain &domain;
@@ -31,16 +29,15 @@ struct Solver {
     double sigma_factor_yp = sigma_factor;
     double kappa_max_yp = kappa_max;
 
-    // remember to delete!!!!!
-    double *rho_e_xn = new double[domain.geo.n_pml_xn];
-    double *rho_e_xp = new double[domain.geo.n_pml_xp];
-    double *rho_m_xn = new double[domain.geo.n_pml_xn];
-    double *rho_m_xp = new double[domain.geo.n_pml_xp];
+    vector rho_e_xn;
+    vector rho_e_xp;
+    vector rho_m_xn;
+    vector rho_m_xp;
 
-    double *rho_e_yn = new double[domain.geo.n_pml_yn];
-    double *rho_e_yp = new double[domain.geo.n_pml_yp];
-    double *rho_m_yn = new double[domain.geo.n_pml_yn];
-    double *rho_m_yp = new double[domain.geo.n_pml_yp];
+    vector rho_e_yn;
+    vector rho_e_yp;
+    vector rho_m_yn;
+    vector rho_m_yp;
 
     double eps_r_pml_xn = 1;
     double mu_r_pml_xn = 1;
@@ -54,61 +51,128 @@ struct Solver {
     // sigma
     double sigma_max_xn;
     double sigma_max_xp;
-    double *sigma_e_xn = new double[domain.geo.n_pml_xn];
-    double *sigma_m_xn = new double[domain.geo.n_pml_xn];
-    double *sigma_e_xp = new double[domain.geo.n_pml_xp];
-    double *sigma_m_xp = new double[domain.geo.n_pml_xp];
+    vector sigma_e_xn;
+    vector sigma_m_xn;
+    vector sigma_e_xp;
+    vector sigma_m_xp;
 
     double sigma_max_yn;
     double sigma_max_yp;
-    double *sigma_e_yn = new double[domain.geo.n_pml_yn];
-    double *sigma_m_yn = new double[domain.geo.n_pml_yn];
-    double *sigma_e_yp = new double[domain.geo.n_pml_yp];
-    double *sigma_m_yp = new double[domain.geo.n_pml_yp];
+    vector sigma_e_yn;
+    vector sigma_m_yn;
+    vector sigma_e_yp;
+    vector sigma_m_yp;
 
     // kappa
-    double *kappa_e_xn = new double[domain.geo.n_pml_xn];
-    double *kappa_e_xp = new double[domain.geo.n_pml_xp];
-    double *kappa_m_xn = new double[domain.geo.n_pml_xn];
-    double *kappa_m_xp = new double[domain.geo.n_pml_xp];
+    vector kappa_e_xn;
+    vector kappa_e_xp;
+    vector kappa_m_xn;
+    vector kappa_m_xp;
 
-    double *kappa_e_yn = new double[domain.geo.n_pml_yn];
-    double *kappa_e_yp = new double[domain.geo.n_pml_yp];
-    double *kappa_m_yn = new double[domain.geo.n_pml_yn];
-    double *kappa_m_yp = new double[domain.geo.n_pml_yp];
+    vector kappa_e_yn;
+    vector kappa_e_yp;
+    vector kappa_m_yn;
+    vector kappa_m_yp;
 
     // alpha
-    double *alpha_e_xn = new double[domain.geo.n_pml_xn];
-    double *alpha_e_xp = new double[domain.geo.n_pml_xp];
-    double *alpha_m_xn = new double[domain.geo.n_pml_xn];
-    double *alpha_m_xp = new double[domain.geo.n_pml_xp];
+    vector alpha_e_xn;
+    vector alpha_e_xp;
+    vector alpha_m_xn;
+    vector alpha_m_xp;
 
-    double *alpha_e_yn = new double[domain.geo.n_pml_yn];
-    double *alpha_e_yp = new double[domain.geo.n_pml_yp];
-    double *alpha_m_yn = new double[domain.geo.n_pml_yn];
-    double *alpha_m_yp = new double[domain.geo.n_pml_yp];
+    vector alpha_e_yn;
+    vector alpha_e_yp;
+    vector alpha_m_yn;
+    vector alpha_m_yp;
 
     // b
-    double *b_e_xn_v = new double[domain.geo.n_pml_xn];
-    double *b_e_xp_v = new double[domain.geo.n_pml_xp];
-    double *b_m_xn_v = new double[domain.geo.n_pml_xn];
-    double *b_m_xp_v = new double[domain.geo.n_pml_xp];
+    vector b_e_xn_v;
+    vector b_e_xp_v;
+    vector b_m_xn_v;
+    vector b_m_xp_v;
 
-    double *b_e_yn_v = new double[domain.geo.n_pml_yn];
-    double *b_e_yp_v = new double[domain.geo.n_pml_yp];
-    double *b_m_yn_v = new double[domain.geo.n_pml_yn];
-    double *b_m_yp_v = new double[domain.geo.n_pml_yp];
+    vector b_e_yn_v;
+    vector b_e_yp_v;
+    vector b_m_yn_v;
+    vector b_m_yp_v;
 
     // a
-    double *a_e_xn_v = new double[domain.geo.n_pml_xn];
-    double *a_e_xp_v = new double[domain.geo.n_pml_xp];
-    double *a_m_xn_v = new double[domain.geo.n_pml_xn];
-    double *a_m_xp_v = new double[domain.geo.n_pml_xp];
+    vector a_e_xn_v;
+    vector a_e_xp_v;
+    vector a_m_xn_v;
+    vector a_m_xp_v;
 
-    double *a_e_yn_v = new double[domain.geo.n_pml_yn];
-    double *a_e_yp_v = new double[domain.geo.n_pml_yp];
-    double *a_m_yn_v = new double[domain.geo.n_pml_yn];
-    double *a_m_yp_v = new double[domain.geo.n_pml_yp];
+    vector a_e_yn_v;
+    vector a_e_yp_v;
+    vector a_m_yn_v;
+    vector a_m_yp_v;
+
+    // 场量更新公式系数
+    double CD_dt;
+    double CD_dt_dx;
+    double CD_dt_dy;
+
+    double CB_dt;
+    double CB_dt_dx;
+    double CB_dt_dy;
+
+    vector C_Dx_dyn_v;
+    vector C_Dx_dyp_v;
+
+    matrix Phi_ex_yn;
+    matrix b_ex_yn;
+    matrix a_ex_yn;
+    matrix C_Dx_dyn;
+
+    matrix Phi_ex_yp;
+    matrix b_ex_yp;
+    matrix a_ex_yp;
+    matrix C_Dx_dyp;
+
+    vector temp_dx;
+
+    vector C_Dy_dxn_v;
+    vector C_Dy_dxp_v;
+
+    matrix Phi_ey_xn;
+    matrix b_ey_xn;
+    matrix a_ey_xn;
+    matrix C_Dy_dxn;
+
+    matrix Phi_ey_xp;
+    matrix b_ey_xp;
+    matrix a_ey_xp;
+    matrix C_Dy_dxp;
+
+    vector temp_dy;
+
+    vector C_Bz_dxn_v;
+    vector C_Bz_dxp_v;
+
+    vector C_Bz_dyn_v;
+    vector C_Bz_dyp_v;
+
+    matrix Phi_mz_xn;
+    matrix b_mz_xn;
+    matrix a_mz_xn;
+    matrix C_Bz_dxn;
+
+    matrix Phi_mz_xp;
+    matrix b_mz_xp;
+    matrix a_mz_xp;
+    matrix C_Bz_dxp;
+
+    vector temp_bz;
+
+    matrix Phi_mz_yn;
+    matrix b_mz_yn;
+    matrix a_mz_yn;
+    matrix C_Bz_dyn;
+
+    matrix Phi_mz_yp;
+    matrix b_mz_yp;
+    matrix a_mz_yp;
+    matrix C_Bz_dyp;
 
     /*constructor, sets world*/
     Solver(Domain &domain, int max_it, double tol);
@@ -128,4 +192,8 @@ struct Solver {
 
     // update the magnetic and electric field under 2d using FDTD method
     void UpdateElectromagnetic();
+
+    void Allocate(Domain &domain);
+    void CalculFdtdPara(Domain &domain);
+    void CalculFdtdCoeff(Domain &domain);
 };

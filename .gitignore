@@ -1,5 +1,6 @@
 # 忽略
 .cache/
+.idea/
 build/
 results/
 cmake-build-debug/

@@ -22,6 +22,9 @@ int main(int argc, char *argv[]) {
     domain.setTime(1 / f / step, step);
 
     Solver solver(domain, 10000, 1e-4);
+    Eigen::MatrixXd mat(2, 2);
+    mat << 1, 2, 3, 4;
+    cout << mat << endl;
 
     std::cout << "Start calculation" << std::endl;
     while (domain.advanceTime()) {
