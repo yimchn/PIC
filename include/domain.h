@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Eigen/Core>
 #include <chrono>
 #include <vector>
 
@@ -8,7 +9,7 @@
 
 struct Species;
 
-/*defines the computational domain*/
+/*defines the computational dm*/
 struct Domain {
     Geometry geo;
 
@@ -17,6 +18,18 @@ struct Domain {
     Field<Vec3d> E;     // electric field components
     Field<Vec3d> H;     // magnetic field componets
     Field<Vec3d> J;     // current density
+
+    Eigen::ArrayXXd Dx;
+    Eigen::ArrayXXd Dy;
+    Eigen::ArrayXXd Dz;
+
+    Eigen::ArrayXXd Hx;
+    Eigen::ArrayXXd Hy;
+    Eigen::ArrayXXd Hz;
+
+    Eigen::ArrayXXd Jx;
+    Eigen::ArrayXXd Jy;
+    Eigen::ArrayXXd Jz;
 
     double dt = 0;    // time step length
     double time = 0;  // physical time
@@ -51,6 +64,4 @@ struct Domain {
 
     /*returns the system potential energy*/
     double getPE();
-
-    void UpdateBoundary(double I, double f);
 };

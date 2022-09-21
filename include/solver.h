@@ -1,16 +1,19 @@
 #pragma once
 
+#include <spdlog/spdlog.h>
+
 #include <Eigen/Core>
-#include <unsupported/Eigen/CXX11/Tensor>
 
 #include "const.h"
 #include "domain.h"
 
 using vector = Eigen::ArrayXd;
-using matrix = Eigen::MatrixXd;
+using matrix = Eigen::ArrayXXd;
+using Eigen::last;
+using Eigen::seq;
 
 struct Solver {
-    Domain &domain;
+    Domain &dm;
     unsigned max_solver_it;  // maximum number of solver iterations
     double tolerance;        // solver tolerance
 
@@ -129,8 +132,6 @@ struct Solver {
     matrix a_ex_yp;
     matrix C_Dx_dyp;
 
-    vector temp_dx;
-
     vector C_Dy_dxn_v;
     vector C_Dy_dxp_v;
 
@@ -143,8 +144,6 @@ struct Solver {
     matrix b_ey_xp;
     matrix a_ey_xp;
     matrix C_Dy_dxp;
-
-    vector temp_dy;
 
     vector C_Bz_dxn_v;
     vector C_Bz_dxp_v;
@@ -161,8 +160,6 @@ struct Solver {
     matrix b_mz_xp;
     matrix a_mz_xp;
     matrix C_Bz_dxp;
-
-    vector temp_bz;
 
     matrix Phi_mz_yn;
     matrix b_mz_yn;
@@ -196,4 +193,5 @@ struct Solver {
     void Allocate(Domain &domain);
     void CalculFdtdPara(Domain &domain);
     void CalculFdtdCoeff(Domain &domain);
+    void UpdateBoundary(Domain &domain, double I, double f);
 };

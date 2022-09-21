@@ -17,7 +17,7 @@ struct Geometry {
     Vec2d dh;  // cell spacing
     Vec2d x0;  // mesh origin
     Vec2d xm;  // origin-diagonally opposite corner (max bound)
-    Vec2d xc;  // domain centroid
+    Vec2d xc;  // dm centroid
 
     Field<double> node_area;  // node volumes
 

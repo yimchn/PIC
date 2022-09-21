@@ -11,10 +11,10 @@
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
 /*saves fields in VTK format*/
-// void Output::fields(Domain &domain, std::vector<Species> &species) {
+// void Output::fields(Domain &dm, std::vector<Species> &species) {
 //     std::stringstream name;
 //     name << "../results/fields_" << std::setfill('0') << std::setw(5)
-//          << domain.getTs() << ".vti";
+//          << dm.getTs() << ".vti";
 
 //     /*open output file*/
 //     std::ofstream out(name.str());
@@ -25,11 +25,11 @@
 
 //     /*ImageData is vtk format for structured Cartesian meshes*/
 //     out << "<VTKFile type=\"ImageData\">\n";
-//     Vec2d x0 = domain.getX0();
-//     Vec2d dh = domain.getDh();
+//     Vec2d x0 = dm.getX0();
+//     Vec2d dh = dm.getDh();
 //     out << "<ImageData Origin=\"" << x0[0] << " " << x0[1] << "\" ";
 //     out << "Spacing=\"" << dh[0] << " " << dh[1] << "\" ";
-//     out << "WholeExtent=\"0 " << domain.ni - 1 << " 0 " << domain.nj - 1
+//     out << "WholeExtent=\"0 " << dm.ni - 1 << " 0 " << dm.nj - 1
 //         << "\">\n";
 
 //     /*output data stored on nodes (point data)*/
@@ -38,21 +38,21 @@
 //     /*node volumes, scalar*/
 //     out << "<DataArray Name=\"NodeVol\" NumberOfComponents=\"1\" "
 //            "format=\"ascii\" type=\"Float64\">\n";
-//     out << domain.node_area;
+//     out << dm.node_area;
 //     out << "</DataArray>\n";
 
 //     /*potential, scalar*/
 //     out << "<DataArray Name=\"phi\" NumberOfComponents=\"1\" format=\"ascii\"
 //     "
 //            "type=\"Float64\">\n";
-//     out << domain.phi;
+//     out << dm.phi;
 //     out << "</DataArray>\n";
 
 //     /*charge density, scalar*/
 //     out << "<DataArray Name=\"rho\" NumberOfComponents=\"1\" format=\"ascii\"
 //     "
 //            "type=\"Float64\">\n";
-//     out << domain.rho;
+//     out << dm.rho;
 //     out << "</DataArray>\n";
 
 //     /*species number densities*/
@@ -68,7 +68,7 @@
 //     out << "<DataArray Name=\"ef\" NumberOfComponents=\"2\" format=\"ascii\"
 //     "
 //            "type=\"Float64\">\n";
-//     out << domain.E;
+//     out << dm.E;
 //     out << "</DataArray>\n";
 
 //     /*close out tags*/
@@ -77,7 +77,7 @@
 //     out << "</VTKFile>\n";
 //     out.close();
 // }
-// void Output::fields(Domain &domain, std::vector<Species> &species) {
+// void Output::fields(Domain &dm, std::vector<Species> &species) {
 void Output::fields(Domain &domain) {
     std::stringstream name;
     name << "../results/fields_" << std::setfill('0') << std::setw(5)
@@ -100,19 +100,28 @@ void Output::fields(Domain &domain) {
         for (int j = 0; j < domain.geo.nj; j++) {
             out << i << " ";
             out << j << " ";
-            out << domain.H[i][j][0] << " ";
-            out << domain.H[i][j][1] << " ";
-            out << domain.H[i][j][2] << " ";
-            out << domain.E[i][j][0] << " ";
-            out << domain.E[i][j][1] << " ";
-            out << domain.E[i][j][2] << " ";
-            out << domain.J[i][j][0] << " ";
-            out << domain.J[i][j][1] << " ";
-            out << domain.J[i][j][2] << "\n";
+            //            out << domain.H[i][j][0] << " ";
+            //            out << domain.H[i][j][1] << " ";
+            //            out << domain.H[i][j][2] << " ";
+            //            out << domain.E[i][j][0] << " ";
+            //            out << domain.E[i][j][1] << " ";
+            //            out << domain.E[i][j][2] << " ";
+            //            out << domain.J[i][j][0] << " ";
+            //            out << domain.J[i][j][1] << " ";
+            //            out << domain.J[i][j][2] << "\n";
+            out << domain.Hx(i, j) << " ";
+            out << domain.Hy(i, j) << " ";
+            out << domain.Hz(i, j) << " ";
+            out << domain.Dx(i, j) << " ";
+            out << domain.Dy(i, j) << " ";
+            out << domain.Dz(i, j) << " ";
+            out << domain.Jx(i, j) << " ";
+            out << domain.Jy(i, j) << " ";
+            out << domain.Jz(i, j) << "\n";
         }
     }
 
-    // out << domain.E;
+    // out << dm.E;
 
     out.close();
 }

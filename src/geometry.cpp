@@ -43,7 +43,7 @@ bool Geometry::InBounds(Vec2d pos) {
 }
 
 /*computes node volumes, dx*dy*dz on internal nodes and fractional
- * values on domain boundary faces*/
+ * values on dm boundary faces*/
 void Geometry::ComputeNodeAreas() {
     for (int i = 0; i < ni; i++)
         for (int j = 0; j < nj; j++) {
@@ -55,7 +55,7 @@ void Geometry::ComputeNodeAreas() {
         }
 }
 
-/*sets domain bounding box and computes mesh spacing*/
+/*sets dm bounding box and computes mesh spacing*/
 void Geometry::SetExtents(Vec2d _x0, Vec2d _xm) {
     /*set origin and the opposite corner*/
     x0 = _x0;

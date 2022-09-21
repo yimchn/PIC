@@ -14,6 +14,18 @@ Domain::Domain(Geometry geo)
       J(geo.ni, geo.nj) {
     time_start =
         std::chrono::high_resolution_clock::now();  // save starting time point
+
+    Dx.resize(geo.ni, geo.nj);
+    Dy.resize(geo.ni, geo.nj);
+    Dz.resize(geo.ni, geo.nj);
+
+    Hx.resize(geo.ni, geo.nj);
+    Hy.resize(geo.ni, geo.nj);
+    Hz.resize(geo.ni, geo.nj);
+
+    Jx.resize(geo.ni, geo.nj);
+    Jy.resize(geo.ni, geo.nj);
+    Jz.resize(geo.ni, geo.nj);
 }
 
 int Domain::getTs() const { return ts; }
@@ -69,43 +81,4 @@ double Domain::getPE() {
             pe += ef2 * geo.node_area[i][j];
         }
     return 0.5 * Const::EPS_0 * pe;
-}
-
-void Domain::UpdateBoundary(double I, double f) {
-    double t = getTime();
-
-// 设置电流边界
-#pragma omp parallel for
-    for (int i = 6; i < 20; i++) {
-        for (int j = 6; j < 20; j++) {
-            J[5][j][2] = -I * sin(2 * Const::PI * f * t);
-            J[20][j][2] = I * sin(2 * Const::PI * f * t);
-            J[i][5][2] = -I * cos(2 * Const::PI * f * t);
-            J[i][20][2] = I * cos(2 * Const::PI * f * t);
-        }
-    }
-
-#pragma omp parallel for
-    for (int i = 0; i < geo.n_pml_xn; i++)
-        for (int j = 0; j < geo.nj; j++) {
-            //            node_type[i][j] = PML_XN;
-        }
-
-#pragma omp parallel for
-    for (int i = geo.ni; i > geo.ni - geo.n_pml_xp; i--)
-        for (int j = 0; j < geo.nj; j++) {
-            //            geo.node_type[i][j] = PML_XP;
-        }
-
-#pragma omp parallel for
-    for (int i = 0; i < geo.ni; i++)
-        for (int j = 0; j < geo.n_pml_yn; j++) {
-            //            node_type[i][j] = PML_YN;
-        }
-
-#pragma omp parallel for
-    for (int i = 0; i < geo.ni; i++)
-        for (int j = geo.nj; j > geo.nj - geo.n_pml_yp; j--) {
-            //            node_type[i][j] = PML_YP;
-        }
 }

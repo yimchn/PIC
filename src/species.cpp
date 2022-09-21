@@ -26,7 +26,7 @@ void Species::advance() {
         /*update position from v=dx/dt*/
         part.pos += part.vel * dt;
 
-        /*did this particle leave the domain? reflect back*/
+        /*did this particle leave the dm? reflect back*/
         for (int i = 0; i < 2; i++) {
             if (part.pos[i] < x0[i]) {
                 part.pos[i] = 2 * x0[i] - part.pos[i];
@@ -53,7 +53,7 @@ void Species::computeNumberDensity() {
 
 /*adds a new particle, rewinding velocity by half dt*/
 void Species::addParticle(Vec2d pos, Vec2d vel, double mpw) {
-    // don't do anything (return) if pos outside domain bounds [x0,xd)
+    // don't do anything (return) if pos outside dm bounds [x0,xd)
     if (!domain.geo.InBounds(pos)) return;
 
     // get particle logical coordinate
@@ -119,7 +119,7 @@ void Species::loadParticlesBoxQS(Vec2d x1, Vec2d x2, double num_den,
             pos[0] = x1[0] + i * di;
             pos[1] = x1[1] + j * dj;
 
-            // shift particles on max faces back to the domain
+            // shift particles on max faces back to the dm
             if (pos[0] == x2[0]) pos[0] -= 1e-4 * di;
             if (pos[1] == x2[1]) pos[1] -= 1e-4 * dj;
 
