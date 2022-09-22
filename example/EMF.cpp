@@ -12,26 +12,24 @@ using namespace std;
 int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::debug);
     double f = 3e5;  // frenquency, Hz
-                     //    int step = 150000;
-    int step = 400;
+    int step = 150000;
+    // int step = 400;
     double I = 100;
 
     Geometry geo;
     geo.SetExtents({-0.1, -0.1}, {0.1, 0.1});
 
-    Domain domain(geo);
-    domain.setTime(1 / f / step, step);
+    Domain dm(geo);
+    dm.setTime(1 / f / step, step);
 
-    Solver solver(domain, 10000, 1e-4);
+    Solver solver(dm, 10000, 1e-4);
 
     std::cout << "Start calculation" << std::endl;
-    while (domain.advanceTime()) {
-        // std::cout << "Satrat calculate step: " << dm.ts << "/" << step
-        //           << std::endl;
-        solver.UpdateBoundary(domain, I, f);
-        //        solver.UpdateElectromagnetic();
-        //        if (dm.ts % 10000 == 0) Output::fields(dm);
-        Output::fields(domain);
+    while (dm.advanceTime()) {
+        std::cout << "Satrat calculate step: " << dm.ts << "/" << step
+                  << std::endl;
+        solver.UpdateBoundary(dm, I, f);
+        if (dm.ts % 1000 == 0) Output::fields(dm);
     }
     std::cout << "Calculation complete" << std::endl;
 

@@ -80,7 +80,7 @@
 // void Output::fields(Domain &dm, std::vector<Species> &species) {
 void Output::fields(Domain &domain) {
     std::stringstream name;
-    name << "../results/fields_" << std::setfill('0') << std::setw(5)
+    name << "../results/fields_" << std::setfill('0') << std::setw(10)
          << domain.getTs() << ".dat";
 
     /*open output file*/
