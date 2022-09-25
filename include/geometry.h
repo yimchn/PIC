@@ -12,6 +12,7 @@ struct Geometry {
     const int n_pml_xp;
     const int n_pml_yn;
     const int n_pml_yp;
+    const int npml;
     const Vec2i nn;  // another way to access node counts
 
     Vec2d dh;  // cell spacing
@@ -22,7 +23,7 @@ struct Geometry {
     Field<double> node_area;  // node volumes
 
     Geometry();
-    Geometry(int ni, int nj);
+    Geometry(int ni, int nj, int npml);
 
     // int GetNi() const;
 

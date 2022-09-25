@@ -19,17 +19,25 @@ struct Domain {
     Field<Vec3d> H;     // magnetic field componets
     Field<Vec3d> J;     // current density
 
-    Eigen::ArrayXXd Dx;
-    Eigen::ArrayXXd Dy;
-    Eigen::ArrayXXd Dz;
+    Eigen::ArrayXXd Ex = Eigen::ArrayXXd::Zero(geo.ni, geo.nj + 1);
+    Eigen::ArrayXXd Ey = Eigen::ArrayXXd::Zero(geo.ni + 1, geo.nj);
+    Eigen::ArrayXXd Ez = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
 
-    Eigen::ArrayXXd Hx;
-    Eigen::ArrayXXd Hy;
-    Eigen::ArrayXXd Hz;
+    Eigen::ArrayXXd Dx = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+    Eigen::ArrayXXd Dy = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+    Eigen::ArrayXXd Dz = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
 
-    Eigen::ArrayXXd Jx;
-    Eigen::ArrayXXd Jy;
-    Eigen::ArrayXXd Jz;
+    Eigen::ArrayXXd Bx = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+    Eigen::ArrayXXd By = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+    Eigen::ArrayXXd Bz = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+
+    Eigen::ArrayXXd Hx = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+    Eigen::ArrayXXd Hy = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+    Eigen::ArrayXXd Hz = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+
+    Eigen::ArrayXXd Jx = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+    Eigen::ArrayXXd Jy = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+    Eigen::ArrayXXd Jz = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
 
     double dt = 0;    // time step length
     double time = 0;  // physical time

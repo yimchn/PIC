@@ -10,7 +10,8 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    spdlog::set_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::info);
+    //    spdlog::set_level(spdlog::level::debug);
     double f = 3e5;  // frenquency, Hz
     int step = 150000;
     // int step = 400;
@@ -26,9 +27,9 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Start calculation" << std::endl;
     while (dm.advanceTime()) {
-        std::cout << "Satrat calculate step: " << dm.ts << "/" << step
-                  << std::endl;
-        solver.UpdateBoundary(dm, I, f);
+        spdlog::info("Calculating: {} / {}", dm.ts, dm.num_ts);
+        solver.EvaluateSource(I, f, dm.getTime());
+        solver.EvaluateFdtd();
         if (dm.ts % 1000 == 0) Output::fields(dm);
     }
     std::cout << "Calculation complete" << std::endl;

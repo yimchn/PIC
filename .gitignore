@@ -1,6 +1,13 @@
-# 忽略
+# 配置文件
 .cache/
 .idea/
-build/
-results/
+
+# 编译生成文件
 cmake-build-debug/
+cmake-build-release/
+build/
+
+# 计算结果
+results/
+
+Untitled-1.c

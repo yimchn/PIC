@@ -4,16 +4,18 @@ Geometry::Geometry()
     : ni{26},
       nj{26},
       nn{26, 26},
+      npml(5),
       n_pml_xn(5),
       n_pml_xp(5),
       n_pml_yn(5),
       n_pml_yp(5),
       node_area{26, 26} {}
 
-Geometry::Geometry(int ni, int nj)
+Geometry::Geometry(int ni, int nj, int npml)
     : ni{ni},
       nj{nj},
       nn{ni, nj},
+      npml(npml),
       n_pml_xn(10),
       n_pml_xp(10),
       n_pml_yn(10),

@@ -9,274 +9,147 @@
 
 Solver::Solver(Domain &dm, int max_it, double tol)
     : dm(dm), max_solver_it(max_it), tolerance(tol) {
+    Init();
+    spdlog::debug("Initial success");
+    UpdatePml();
     spdlog::debug("All of the parameters have been allocated");
-    InitFdtdPara(dm);
-    CalculFdtdCoeff(dm);
 }
-void Solver::CalculFdtdCoeff(Domain &dm) {
-    CD_dt = dm.getDt();
-    CD_dt_dx = CD_dt / dm.geo.dh[0];
-    CD_dt_dy = CD_dt / dm.geo.dh[1];
+void Solver::Init() {
+    dt = dm.getDt();
+    delta = dm.geo.dh[0];
+    eps_r = 1;
+    mu_r = 1;
+    sigma = 0;
+    gradient_k = 1;
+    R0 = 1.0e-7;
+    m = 3;
+    eta = sqrt(Const::MU_0 / Const::EPS_0);
 
-    CB_dt = dm.getDt();
-    CB_dt_dx = CB_dt / dm.geo.dh[0];
-    CB_dt_dy = CB_dt / dm.geo.dh[1];
+    double tmp1 = Const::EPS_0 * eps_r / dt;
+    double tmp2 = sigma / 2;
+    c1 = dt / (Const::EPS_0 * eps_r * dm.geo.dh[0]);
+    c2 = (tmp1 - tmp2) / (tmp1 + tmp2);
+    c3 = 1 / (tmp1 + tmp2);
+    c4 = tmp1;
+    c5 = -tmp2;
 
-    C_Dx_dyn_v = CD_dt_dy / kappa_e_yn;
-    C_Dx_dyp_v = CD_dt_dy / kappa_e_yp;
+    d1 = 1;
+    d2 = dt / delta;
+    d3 = 1;
+    d4 = 1 / Const::MU_0;
 
-    // PML区域内Dx的更新公式系数
-    for (int i = 0; i < dm.geo.n_pml_yn; ++i) {
-        b_ex_yn.col(i) = b_e_yn_v(i);
-        a_ex_yn.col(i) = a_e_yn_v(i);
-        C_Dx_dyn.col(i) = C_Dx_dyn_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_yp; ++i) {
-        b_ex_yp.col(i) = b_e_yp_v(i);
-        a_ex_yp.col(i) = a_e_yp_v(i);
-        C_Dx_dyp.col(i) = C_Dx_dyp_v(i);
-    }
+    c1x = c1;
+    c2x = c2;
+    c3x = c3;
+    c4x = c4;
+    c5x = c5;
 
-    // PML区域内Dy的公式更新系数
-    C_Dy_dxn_v = CD_dt_dx / kappa_e_xn;
-    C_Dy_dxp_v = CD_dt_dx / kappa_e_xp;
+    c1y = c1;
+    c2y = c2;
+    c3y = c3;
+    c4y = c4;
+    c5y = c5;
 
-    for (int i = 0; i < dm.geo.n_pml_xn; ++i) {
-        b_ey_xn.row(i) = b_e_xn_v(i);
-        a_ey_xn.row(i) = a_e_xn_v(i);
-        C_Dy_dxn.row(i) = C_Dy_dxn_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_xp; ++i) {
-        b_ey_xp.row(i) = b_e_xp_v(i);
-        a_ey_xp.row(i) = a_e_xp_v(i);
-        C_Dy_dxp.row(i) = C_Dy_dxp_v(i);
-    }
-
-    // Dz
-    C_Dz_dxn_v = CD_dt_dx / kappa_m_xn;
-    C_Dz_dxp_v = CD_dt_dx / kappa_m_xp;
-
-    C_Dz_dyn_v = CD_dt_dy / kappa_m_yn;
-    C_Dz_dyp_v = CD_dt_dy / kappa_m_yp;
-
-    for (int i = 0; i < dm.geo.n_pml_xn; i++) {
-        b_ez_xn.row(i) = b_e_xn_v(i);
-        a_ez_xn.row(i) = a_e_xn_v(i);
-        C_Dz_dxn.row(i) = C_Dz_dxn_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_xp; i++) {
-        b_ez_xp.row(i) = b_e_xp_v(i);
-        a_ez_xp.row(i) = a_e_xp_v(i);
-        C_Dz_dxp.row(i) = C_Dz_dxp_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_yn; ++i) {
-        b_ez_yn.col(i) = b_e_yn_v(i);
-        a_ez_yn.col(i) = a_e_yn_v(i);
-        C_Dz_dyn.col(i) = C_Dz_dyn_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_yp; ++i) {
-        b_ez_yp.col(i) = b_e_yp_v(i);
-        a_ez_yp.col(i) = a_e_yp_v(i);
-        C_Dz_dyp.col(i) = C_Dz_dyp_v(i);
-    }
-
-    C_Bx_dyn_v = CB_dt_dy / kappa_e_yn;
-    C_Bx_dyp_v = CB_dt_dy / kappa_e_yp;
-
-    // PML区域内Dx的更新公式系数
-    for (int i = 0; i < dm.geo.n_pml_yn; ++i) {
-        b_mx_yn.col(i) = b_m_yn_v(i);
-        a_mx_yn.col(i) = a_m_yn_v(i);
-        C_Bx_dyn.col(i) = C_Bx_dyn_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_yp; ++i) {
-        b_mx_yp.col(i) = b_m_yp_v(i);
-        a_mx_yp.col(i) = a_m_yp_v(i);
-        C_Bx_dyp.col(i) = C_Bx_dyp_v(i);
-    }
-
-    // PML区域内Dy的公式更新系数
-    C_By_dxn_v = CB_dt_dx / kappa_e_xn;
-    C_By_dxp_v = CB_dt_dx / kappa_e_xp;
-
-    for (int i = 0; i < dm.geo.n_pml_xn; ++i) {
-        b_my_xn.row(i) = b_m_xn_v(i);
-        a_my_xn.row(i) = a_m_xn_v(i);
-        C_By_dxn.row(i) = C_By_dxn_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_xp; ++i) {
-        b_my_xp.row(i) = b_m_xp_v(i);
-        a_my_xp.row(i) = a_m_xp_v(i);
-        C_By_dxp.row(i) = C_By_dxp_v(i);
-    }
-
-    // PML区域内Bz的更新公式系数
-    C_Bz_dxn_v = CB_dt_dx / kappa_m_xn;
-    C_Bz_dxp_v = CB_dt_dx / kappa_m_xp;
-
-    C_Bz_dyn_v = CB_dt_dy / kappa_m_yn;
-    C_Bz_dyp_v = CB_dt_dy / kappa_m_yp;
-
-    for (int i = 0; i < dm.geo.n_pml_xn; i++) {
-        b_mz_xn.row(i) = b_m_xn_v(i);
-        a_mz_xn.row(i) = a_m_xn_v(i);
-        C_Bz_dxn.row(i) = C_Bz_dxn_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_xp; i++) {
-        b_mz_xp.row(i) = b_m_xp_v(i);
-        a_mz_xp.row(i) = a_m_xp_v(i);
-        C_Bz_dxp.row(i) = C_Bz_dxp_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_yn; ++i) {
-        b_mz_yn.col(i) = b_m_yn_v(i);
-        a_mz_yn.col(i) = a_m_yn_v(i);
-        C_Bz_dyn.col(i) = C_Bz_dyn_v(i);
-    }
-    for (int i = 0; i < dm.geo.n_pml_yp; ++i) {
-        b_mz_yp.col(i) = b_m_yp_v(i);
-        a_mz_yp.col(i) = a_m_yp_v(i);
-        C_Bz_dyp.col(i) = C_Bz_dyp_v(i);
-    }
-
-    spdlog::debug("All of the coefficients have been calculated");
+    d1z = d1;
+    d2z = d2;
+    d3z = d3;
+    d4z = d4;
 }
 
-void Solver::InitFdtdPara(Domain &dm) {
-    // 计算电磁场量节点离开PML内边界的距离
-    // x轴方向
-    for (double i = dm.geo.n_pml_xn - 0.75; i > 0.25; i--)
-        rho_e_xn[static_cast<int>(i)] = i / dm.geo.n_pml_xn;
+void Solver::UpdatePml() {
+    boundary_width = static_cast<double>(dm.geo.npml * delta);
+    sigma_max = -log(R0) * (m + 1) / (2 * eta * boundary_width);
+    boundary_factor = sigma_max / (delta * (pow(boundary_width, m) * (m + 1)));
+    gradient_k = 1;
+    double gradient_conductivity = 0;
+    // double x1 = 0;
+    // double x2 = 0;
 
-    for (double i = 0.25; i < dm.geo.n_pml_xp - 0.75; i++)
-        rho_e_xp[static_cast<int>(i)] = i / dm.geo.n_pml_xp;
+    // #pragma omp parallel for
+    for (int i = 0; i < dm.geo.npml; i++) {
+        double x = 0.0;
+        double x1 = (x + 0.5) * delta;
+        double x2 = (x - 0.5) * delta;
 
-    for (double i = dm.geo.n_pml_xn - 0.25; i > 0.75; i--)
-        rho_m_xn[static_cast<int>(i)] = i / dm.geo.n_pml_xn;
+        if (i == 0) {
+            gradient_conductivity = boundary_factor * (pow(x1, m + 1));
+        } else {
+            gradient_conductivity =
+                boundary_factor * (pow(x1, m + 1) - pow(x2, m + 1));
+        }
 
-    for (double i = 0.75; i < dm.geo.n_pml_xp - 0.25; i++)
-        rho_m_xp[static_cast<int>(i)] = i / dm.geo.n_pml_xp;
+        double tmp1 = gradient_k * Const::EPS_0 / dt;
+        double tmp2 = gradient_conductivity / 2.0;
 
-    // y轴方向
-    for (double i = dm.geo.n_pml_yn - 0.75; i > 0.25; i--)
-        rho_e_yn[static_cast<int>(i)] = i / dm.geo.n_pml_yn;
+        gradientC2(i) = (tmp1 - tmp2) / (tmp1 + tmp2);
+        gradientC3(i) = 1 / (tmp1 + tmp2);
 
-    for (double i = 0.25; i < dm.geo.n_pml_yp - 0.75; i++)
-        rho_e_yp[static_cast<int>(i)] = i / dm.geo.n_pml_yp;
+        x1 = (x + 1) * delta;
+        x2 = (x + 0) * delta;
 
-    for (double i = dm.geo.n_pml_yn - 0.25; i > 0.75; i--)
-        rho_m_yn[static_cast<int>(i)] = i / dm.geo.n_pml_yn;
+        gradient_conductivity =
+            boundary_factor * (pow(x1, m + 1) - pow(x2, m + 1));
 
-    for (double i = 0.75; i < dm.geo.n_pml_yp - 0.25; i++)
-        rho_m_yp[static_cast<int>(i)] = i / dm.geo.n_pml_yp;
+        tmp1 = gradient_k * Const::EPS_0 / dt;
+        tmp2 = gradient_conductivity / 2;
 
-    // 设置sigma参数
-    sigma_max_xn =
-        sigma_factor_xn * (m_pml + 1) /
-        (150 * Const::PI * sqrt(eps_r_pml_xn * mu_r_pml_xn) * dm.geo.dh[0]);
-    sigma_max_xp =
-        sigma_factor_xp * (m_pml + 1) /
-        (150 * Const::PI * sqrt(eps_r_pml_xp * mu_r_pml_xp) * dm.geo.dh[0]);
+        gradientC4(i) = (tmp1 + tmp2);
+        gradientC5(i) = (tmp1 - tmp2);
 
-    sigma_max_yn =
-        sigma_factor_yn * (m_pml + 1) /
-        (150 * Const::PI * sqrt(eps_r_pml_yn * mu_r_pml_yn) * dm.geo.dh[1]);
-    sigma_max_yp =
-        sigma_factor_yp * (m_pml + 1) /
-        (150 * Const::PI * sqrt(eps_r_pml_yp * mu_r_pml_yp) * dm.geo.dh[1]);
+        tmp1 = gradient_k / dt;
+        tmp2 = gradient_conductivity / (2 * Const::EPS_0);
 
-    sigma_e_xn = sigma_max_xn * pow(rho_e_xn, m_pml);
-    sigma_m_xn =
-        Const::MU_0 / Const::EPS_0 * sigma_max_xn * pow(rho_m_xn, m_pml);
+        gradientD1(i) = (tmp1 - tmp2) / (tmp1 + tmp2);
+        gradientD2(i) = (1 / delta) / (tmp1 + tmp2);
 
-    sigma_e_xp = sigma_max_xp * pow(rho_e_xp, m_pml);
-    sigma_m_xp =
-        Const::MU_0 / Const::EPS_0 * sigma_max_xp * pow(rho_m_xp, m_pml);
+        tmp1 *= Const::MU_0;
+        tmp2 *= Const::MU_0;
 
-    sigma_e_yn = sigma_max_yn * pow(rho_e_yn, m_pml);
-    sigma_m_yn =
-        Const::MU_0 / Const::EPS_0 * sigma_max_yn * pow(rho_m_yn, m_pml);
+        gradientD3(i) = (tmp1 - tmp2) / (tmp1 + tmp2);
+        gradientD4(i) = (1 / dt) / (tmp1 + tmp2);
+        ++x;
+    }
 
-    sigma_e_yp = sigma_max_yp * pow(rho_e_yp, m_pml);
-    sigma_m_yp =
-        Const::MU_0 / Const::EPS_0 * sigma_max_yp * pow(rho_m_yp, m_pml);
+    // ex, ey, ez ------ front/back (y)
+#pragma omp parallel for
+    for (int j = 0; j < dm.geo.npml; j++) {
+        for (int i = 0; i < dm.geo.ni; i++) {
+            c2x(i, dm.geo.npml - j) = gradientC2(j);
+            c3x(i, dm.geo.npml - j) = gradientC3(j);
+            c2x(i, dm.geo.nj - dm.geo.npml + j) = gradientC2(j);
+            c3x(i, dm.geo.nj - dm.geo.npml + j) = gradientC3(j);
+        }
 
-    // 设置kappa参数
-    kappa_e_xn = 1 + (kappa_max_xn - 1) * pow(rho_e_xn, m_pml);
-    kappa_m_xn = 1 + (kappa_max_xn - 1) * pow(rho_m_xn, m_pml);
+        c4y(dm.geo.npml - j - 1) = gradientC4(j);
+        c5y(dm.geo.npml - j - 1) = gradientC5(j);
+        c4y(dm.geo.nj - dm.geo.npml + j) = gradientC4(j);
+        c5y(dm.geo.nj - dm.geo.npml + j) = gradientC5(j);
 
-    kappa_e_xp = 1 + (kappa_max_xp - 1) * pow(rho_e_xp, m_pml);
-    kappa_m_xp = 1 + (kappa_max_xp - 1) * pow(rho_m_xp, m_pml);
+        d3z(dm.geo.npml - j - 1) = gradientD3(j);
+        d4z(dm.geo.npml - j - 1) = gradientD4(j);
+        d3z(dm.geo.nj - dm.geo.npml + j) = gradientD3(j);
+        d4z(dm.geo.nj - dm.geo.npml + j) = gradientD4(j);
+    }
 
-    kappa_e_yn = 1 + (kappa_max_yn - 1) * pow(rho_e_yn, m_pml);
-    kappa_m_yn = 1 + (kappa_max_yn - 1) * pow(rho_m_yn, m_pml);
+    // ey, hz ----- left/right (x)
+    for (int i = 0; i < dm.geo.npml; i++) {
+        for (int j = 0; j < dm.geo.nj; j++) {
+            c2y(dm.geo.npml - i, j) = gradientC2(i);
+            c3y(dm.geo.npml - i, j) = gradientC3(i);
+            c2y(dm.geo.ni - dm.geo.npml + i, j) = gradientC2(i);
+            c3y(dm.geo.ni - dm.geo.npml + i, j) = gradientC3(i);
+        }
 
-    kappa_e_yp = 1 + (kappa_max_yp - 1) * pow(rho_e_yp, m_pml);
-    kappa_m_yp = 1 + (kappa_max_yp - 1) * pow(rho_m_yp, m_pml);
+        c4x(dm.geo.npml - i - 1) = gradientC4(i);
+        c5x(dm.geo.npml - i - 1) = gradientC5(i);
+        c4x(dm.geo.ni - dm.geo.npml + 1) = gradientC4(i);
+        c5x(dm.geo.ni - dm.geo.npml + 1) = gradientC5(i);
 
-    // 设置alpha参数
-    alpha_e_xn = alpha_max * (1 - rho_e_xn);
-    alpha_m_xn = Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_xn);
-
-    alpha_e_xp = alpha_max * (1 - rho_e_xp);
-    alpha_m_xp = Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_xp);
-
-    alpha_e_yn = alpha_max * (1 - rho_e_yn);
-    alpha_m_yn = Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_yn);
-
-    alpha_e_yp = alpha_max * (1 - rho_e_yp);
-    alpha_m_yp = Const::MU_0 / Const::EPS_0 * alpha_max * (1 - rho_m_yp);
-
-    // b
-    b_e_xn_v = exp(-(sigma_e_xn / kappa_e_xn + alpha_e_xn) * dm.getDt() /
-                   Const::EPS_0);
-    b_m_xn_v =
-        exp(-(sigma_m_xn / kappa_m_xn + alpha_m_xn) * dm.getDt() / Const::MU_0);
-
-    b_e_xp_v = exp(-(sigma_e_xp / kappa_e_xp + alpha_e_xp) * dm.getDt() /
-                   Const::EPS_0);
-    b_m_xp_v =
-        exp(-(sigma_m_xp / kappa_m_xp + alpha_m_xp) * dm.getDt() / Const::MU_0);
-
-    b_e_yn_v = exp(-(sigma_e_yn / kappa_e_yn + alpha_e_yn) * dm.getDt() /
-                   Const::EPS_0);
-    b_m_yn_v =
-        exp(-(sigma_m_yn / kappa_m_yn + alpha_m_yn) * dm.getDt() / Const::MU_0);
-
-    b_e_yp_v = exp(-(sigma_e_yp / kappa_e_yp + alpha_e_yp) * dm.getDt() /
-                   Const::EPS_0);
-    b_m_yp_v =
-        exp(-(sigma_m_yp / kappa_m_yp + alpha_m_yp) * dm.getDt() / Const::MU_0);
-
-    // a
-    a_e_xn_v =
-        sigma_e_xn * (b_e_xn_v - 1) /
-        (dm.geo.dh[0] * kappa_e_xn * (sigma_e_xn + alpha_e_xn * kappa_e_xn));
-    a_m_xn_v =
-        sigma_m_xn * (b_m_xn_v - 1) /
-        (dm.geo.dh[0] * kappa_m_xn * (sigma_m_xn + alpha_m_xn * kappa_m_xn));
-
-    a_e_xp_v =
-        sigma_e_xp * (b_e_xp_v - 1) /
-        (dm.geo.dh[0] * kappa_e_xp * (sigma_e_xp + alpha_e_xp * kappa_e_xp));
-    a_m_xp_v =
-        sigma_m_xp * (b_m_xp_v - 1) /
-        (dm.geo.dh[0] * kappa_m_xp * (sigma_m_xp + alpha_m_xp * kappa_m_xp));
-
-    a_e_yn_v =
-        sigma_e_yn * (b_e_yn_v - 1) /
-        (dm.geo.dh[0] * kappa_e_yn * (sigma_e_yn + alpha_e_yn * kappa_e_yn));
-    a_m_yn_v =
-        sigma_m_yn * (b_m_yn_v - 1) /
-        (dm.geo.dh[0] * kappa_m_yn * (sigma_m_yn + alpha_m_yn * kappa_m_yn));
-
-    a_e_yp_v =
-        sigma_e_yp * (b_e_yp_v - 1) /
-        (dm.geo.dh[0] * kappa_e_yp * (sigma_e_yp + alpha_e_yp * kappa_e_yp));
-    a_m_yp_v =
-        sigma_m_yp * (b_m_yp_v - 1) /
-        (dm.geo.dh[0] * kappa_m_yp * (sigma_m_yp + alpha_m_yp * kappa_m_yp));
-
-    spdlog::debug("All of the parameters have been calculated");
+        d1z(dm.geo.npml - i - 1) = gradientD1(i);
+        d2z(dm.geo.npml - i - 1) = gradientD2(i);
+        d1z(dm.geo.ni - dm.geo.npml + i) = gradientD1(i);
+        d2z(dm.geo.ni - dm.geo.npml + i) = gradientD2(i);
+    }
 }
 
 /*solves Poisson equation using Gauss-Seidel*/
@@ -369,354 +242,53 @@ void Solver::computeEF() {
                 E[1] = -(phi[i][j + 1] - phi[i][j - 1]) / (2 * dy);
         }
 }
+void Solver::EvaluateFdtd() {
+    // Update electirc fields (Ex and Ey)
 
-// void Solver::UpdateHx2d() {
-//     Vec2d dh = dm.geo.dh;
-//     double dx = dh[0];
-//     double dy = dh[1];
-//     double dt = dm.getDt();
-
-// #pragma omp parallel for
-//     for (int i = 0; i < dm.geo.ni; i++) {
-// #pragma omp parallel for
-//         for (int j = 0; j < dm.geo.nj - 1; j++) {
-//             Field<Vec3d> &E = dm.E;
-//             Field<Vec3d> &H = dm.H;
-//             Field<Vec3d> &J = dm.J;
-
-//             H[i][j][0] = H[i][j][0] - dt * (E[i][j + 1][2] - E[i][j][2]) /
-//                                           (Const::MU_0 * dy);
-//         }
-//     }
-// }
-
-// void Solver::UpdateHy2d() {
-//     Vec2d dh = dm.geo.dh;
-//     double dx = dh[0];
-//     double dy = dh[1];
-//     double dt = dm.getDt();
-
-// #pragma omp parallel for
-//     for (int i = 0; i < dm.geo.ni - 1; i++) {
-// #pragma omp parallel for
-//         for (int j = 0; j < dm.geo.nj; j++) {
-//             Field<Vec3d> &E = dm.E;
-//             Field<Vec3d> &H = dm.H;
-//             Field<Vec3d> &J = dm.J;
-
-//             H[i][j][1] = H[i][j][1] + dt * (E[i + 1][j][2] - E[i][j][2]) /
-//                                           (Const::MU_0 * dx);
-//         }
-//     }
-// }
-
-// void Solver::UpdateHz2d() {
-//     Vec2d dh = dm.geo.dh;
-//     double dx = dh[0];
-//     double dy = dh[1];
-//     double dt = dm.getDt();
-
-// #pragma omp parallel for
-//     for (int i = 0; i < dm.geo.ni - 1; i++) {
-// #pragma omp parallel for
-//         for (int j = 0; j < dm.geo.nj - 1; j++) {
-//             Field<Vec3d> &E = dm.E;
-//             Field<Vec3d> &H = dm.H;
-//             Field<Vec3d> &J = dm.J;
-
-//             H[i][j][2] =
-//                 H[i][j][2] -
-//                 dt * (E[i + 1][j][1] - E[i][j][1]) / (Const::MU_0 * dx) +
-//                 dt * (E[i][j + 1][0] - E[i][j][0]) / (Const::MU_0 * dy);
-//         }
-//     }
-// }
-
-// void Solver::UpdateEx2d() {
-//     Vec2d dh = dm.geo.dh;
-//     double dx = dh[0];
-//     double dy = dh[1];
-//     double dt = dm.getDt();
-
-// #pragma omp parallel for
-//     for (int i = 1; i < dm.geo.ni - 1; i++) {
-// #pragma omp parallel for
-//         for (int j = 1; j < dm.geo.nj - 1; j++) {
-//             Field<Vec3d> &E = dm.E;
-//             Field<Vec3d> &H = dm.H;
-//             Field<Vec3d> &J = dm.J;
-
-//             E[i][j][0] =
-//                 E[i][j][0] +
-//                 dt * (H[i][j][2] - H[i][j - 1][2]) / (Const::EPS_0 * dy) -
-//                 J[i][j][0] / Const::EPS_0;
-//         }
-//     }
-// }
-
-// void Solver::UpdateEy2d() {
-//     Vec2d dh = dm.geo.dh;
-//     double dx = dh[0];
-//     double dy = dh[1];
-//     double dt = dm.getDt();
-
-// #pragma omp parallel for
-//     for (int i = 1; i < dm.geo.ni - 1; i++) {
-// #pragma omp parallel for
-//         for (int j = 1; j < dm.geo.nj - 1; j++) {
-//             Field<Vec3d> &E = dm.E;
-//             Field<Vec3d> &H = dm.H;
-//             Field<Vec3d> &J = dm.J;
-
-//             E[i][j][1] =
-//                 E[i][j][1] -
-//                 dt * (H[i][j][2] - H[i - 1][j][2]) / (Const::EPS_0 * dx) -
-//                 J[i][j][1] / Const::EPS_0;
-//         }
-//     }
-// }
-
-// void Solver::UpdateEz2d() {
-//     Vec2d dh = dm.geo.dh;
-//     double dx = dh[0];
-//     double dy = dh[1];
-//     double dt = dm.getDt();
-
-// #pragma omp parallel for
-//     for (int i = 1; i < dm.geo.ni - 1; i++) {
-// #pragma omp parallel for
-//         for (int j = 1; j < dm.geo.nj - 1; j++) {
-//             Field<Vec3d> &E = dm.E;
-//             Field<Vec3d> &H = dm.H;
-//             Field<Vec3d> &J = dm.J;
-
-//             E[i][j][2] =
-//                 E[i][j][2] +
-//                 dt * (H[i][j][1] - H[i - 1][j][1]) / (Const::EPS_0 * dx) -
-//                 dt * (H[i][j][0] - H[i][j - 1][0]) / (Const::EPS_0 * dy) -
-//                 dt * J[i][j][2] / Const::EPS_0;
-//         }
-//     }
-// }
-
-// void Solver::UpdateElectromagnetic() {
-//     UpdateEz2d();
-//     // UpdateEx2d();
-//     // UpdateEy2d();
-//     // UpdateHz2d();
-//     UpdateHx2d();
-//     UpdateHy2d();
-// }
-
-void Solver::UpdateBoundary(Domain &dm, double I, double f) {
-    double t = dm.getTime();
-
-// 设置电流边界
 #pragma omp parallel for
-    for (int i = 6; i < 20; i++) {
-        for (int j = 6; j < 20; j++) {
-            dm.Jz(5, j) = -I * sin(2 * Const::PI * f * t);
-            dm.Jz(20, j) = I * sin(2 * Const::PI * f * t);
-            dm.Jz(i, 5) = -I * cos(2 * Const::PI * f * t);
-            dm.Jz(i, 20) = I * cos(2 * Const::PI * f * t);
+    for (int i = 0; i < dm.geo.ni; ++i) {
+        for (int j = 1; j < dm.geo.nj; ++j) {
+            double tmp = dm.Dx(i, j);
+            dm.Dx(i, j) += c1x * (dm.Hz(i, j) - dm.Hz(i, j - 1));
+            dm.Ex(i, j) = c2x(i, j) * dm.Ex(i, j) +
+                          c3x(i, j) * (c4x(i) * dm.Dx(i, j) + c5x(i) * tmp);
         }
     }
-    auto all = seq(0, last);
+    spdlog::debug("node 1 ok");
 
-    /**
-     * @brief z方向电磁场更新
-     *
-     */
-    auto inB = seq(0, dm.geo.n_pml_xn - 1);
-    auto inB_next = seq(1, dm.geo.n_pml_xn);
-    auto ipB = seq(dm.geo.ni - dm.geo.n_pml_xp - 1, dm.geo.ni - 2);
-    auto ipB_next = seq(dm.geo.ni - dm.geo.n_pml_xp, dm.geo.ni - 1);
-    auto iB = seq(dm.geo.n_pml_xn, dm.geo.ni - dm.geo.n_pml_xp - 1);
-    auto iB_next = seq(dm.geo.n_pml_xn + 1, dm.geo.ni - dm.geo.n_pml_xp);
-    auto knB = seq(0, dm.geo.n_pml_yn - 1);
-    auto knB_next = seq(1, dm.geo.n_pml_yn);
-    auto kpB = seq(dm.geo.nj - dm.geo.n_pml_yp - 1, dm.geo.nj - 2);
-    auto kpB_next = seq(dm.geo.nj - dm.geo.n_pml_yp, dm.geo.nj - 1);
-    auto kB = seq(dm.geo.n_pml_yn, dm.geo.nj - dm.geo.n_pml_yp - 1);
-    auto kB_next = seq(dm.geo.n_pml_yn + 1, dm.geo.nj - dm.geo.n_pml_yp);
+#pragma omp parallel for
+    for (int i = 1; i < dm.geo.ni; ++i) {
+        for (int j = 0; j < dm.geo.nj; ++j) {
+            double tmp = dm.Dy(i, j);
+            dm.Dy(i, j) += c1y * (dm.Hz(i - 1, j) - dm.Hz(i, j));
+            dm.Ey(i, j) = c2y(i, j) * dm.Ey(i, j) +
+                          c3y(i, j) * (c4y(i) * dm.Dy(i, j) + c5y(i) * tmp);
+        }
+    }
+    spdlog::debug("node 2 ok");
 
-    // Bz更新
-    // x
-    // 负PML
-    Phi_mz_xn = b_mz_xn * Phi_mz_xn +
-                a_mz_xn * (dm.Dx(inB_next, all) - dm.Dx(inB, all));
-    dm.Hz(inB, all) = dm.Hz(inB, all) +
-                      C_Bz_dxn * (dm.Dx(inB_next, all) - dm.Dx(inB, all)) +
-                      CB_dt * Phi_mz_xn;
-
-    // 正PML
-    Phi_mz_xp = b_mz_xp * Phi_mz_xp +
-                a_mz_xp * (dm.Dx(ipB_next, all) - dm.Dx(ipB, all));
-    dm.Hz(ipB, all) = dm.Hz(ipB, all) +
-                      CB_dt_dx * (dm.Dx(ipB_next, all) - dm.Dx(ipB, all)) +
-                      CB_dt * Phi_mz_xp;
-
-    // 非PML
-    dm.Hz(iB, all) =
-        dm.Hz(iB, all) + CB_dt_dx * (dm.Dx(iB_next, all) - dm.Dx(iB, all));
-
-    // y
-    // 负PML
-    Phi_mz_yn = b_mz_yn * Phi_mz_yn +
-                a_mz_yn * (dm.Dy(all, knB_next) - dm.Dy(all, knB));
-    dm.Hz(all, knB) = dm.Hz(all, knB) -
-                      C_Bz_dyn * (dm.Dy(all, knB_next) - dm.Dy(all, knB)) -
-                      CB_dt * Phi_mz_yn;
-
-    // 正PML
-    Phi_mz_yp = b_mz_yp * Phi_mz_yp +
-                a_mz_yp * (dm.Dy(all, kpB_next) - dm.Dy(all, kpB));
-    dm.Hz(all, kpB) = dm.Hz(all, kpB) -
-                      C_Bz_dyp * (dm.Dy(all, kpB_next) - dm.Dy(all, kpB)) -
-                      CB_dt * Phi_mz_yp;
-
-    // 非PML
-    dm.Hx(all, kB) =
-        dm.Hx(all, kB) - CB_dt_dy * (dm.Dy(all, kB_next) - dm.Dy(all, kB));
-
-    // Dz
-    // x
-    // 负PML
-    Phi_ez_xn = b_ez_xn * Phi_ez_xn +
-                a_ez_xn * (dm.Dx(inB_next, all) - dm.Dx(inB, all));
-    dm.Dz(inB, all) = dm.Hz(inB, all) +
-                      C_Dz_dxn * (dm.Hx(inB_next, all) - dm.Hx(inB, all)) +
-                      CD_dt * (Phi_ez_xn - dm.Jz(inB, all));
-
-    // 正PML
-    Phi_ez_xp = b_ez_xp * Phi_ez_xp +
-                a_ez_xp * (dm.Dx(ipB_next, all) - dm.Dx(ipB, all));
-    dm.Dz(ipB, all) = dm.Dz(ipB, all) +
-                      CD_dt_dx * (dm.Hx(ipB_next, all) - dm.Hx(ipB, all)) +
-                      CD_dt * (Phi_ez_xp - dm.Jz(ipB, all));
-
-    // 非PML
-    dm.Dz(iB, all) = dm.Dz(iB, all) +
-                     CD_dt_dx * (dm.Hx(iB_next, all) - dm.Hx(iB, all)) -
-                     dm.Jz(iB, all);
-
-    // y
-    // 负PML
-    Phi_ez_yn = b_ez_yn * Phi_ez_yn +
-                a_ez_yn * (dm.Dy(all, knB_next) - dm.Dy(all, knB));
-    dm.Dz(all, knB) = dm.Dz(all, knB) -
-                      C_Dz_dyn * (dm.Hy(all, knB_next) - dm.Hy(all, knB)) -
-                      CD_dt * (Phi_mz_yn - dm.Jz(all, knB));
-
-    // 正PML
-    Phi_ez_yp = b_ez_yp * Phi_ez_yp +
-                a_ez_yp * (dm.Dy(all, kpB_next) - dm.Dy(all, kpB));
-    dm.Dz(all, kpB) = dm.Dz(all, kpB) -
-                      C_Dz_dyp * (dm.Hy(all, kpB_next) - dm.Hy(all, kpB)) -
-                      CD_dt * (Phi_mz_yp - dm.Jz(all, kpB));
-
-    // 非PML
-    dm.Dx(all, kB) = dm.Dx(all, kB) -
-                     CD_dt_dy * (dm.Hy(all, kB_next) - dm.Hy(all, kB)) -
-                     dm.Jz(all, kB);
-
-    /**
-     * @brief x方向电磁场更新
-     *
-     */
-    auto knD = seq(1, dm.geo.n_pml_yn);
-    auto knD_pre = seq(0, dm.geo.n_pml_yn - 1);
-    auto kpD = seq(dm.geo.nj - dm.geo.n_pml_yp, dm.geo.nj - 1);
-    auto kpD_pre = seq(dm.geo.nj - dm.geo.n_pml_yp - 1, dm.geo.nj - 2);
-    auto kD = seq(dm.geo.n_pml_yn + 1, dm.geo.nj - dm.geo.n_pml_yn - 1);
-    auto kD_pre = seq(dm.geo.n_pml_yn, dm.geo.nj - dm.geo.n_pml_yn - 2);
-
-    // Dx更新主循环程序
-    // 负y轴方向CMPL区域中的Dx更新程序
-    Phi_ex_yn =
-        b_ex_yn * Phi_ex_yn + a_ex_yn * (dm.Hz(all, knD) - dm.Hz(all, knD_pre));
-    dm.Dx(all, knD) = dm.Dx(all, knD) -
-                      C_Dx_dyn * (dm.Hz(all, knD) - dm.Hz(all, knD_pre)) -
-                      CD_dt * (Phi_ex_yn - dm.Jx(all, knD));
-
-    // 正y轴方向的CPML区域中的Dx更新程序
-    Phi_ex_yp =
-        b_ex_yp * Phi_ex_yp + a_ex_yp * (dm.Hz(all, kpD) - dm.Hz(all, kpD_pre));
-    dm.Dx(all, kpD) = dm.Dx(all, kpD) -
-                      C_Dx_dyp * (dm.Hz(all, kpD) - dm.Hz(all, kpD_pre)) -
-                      CD_dt * (Phi_ex_yp - dm.Jx(all, kpD));
-
-    // 非PML
-    dm.Dx(all, kD) = dm.Dx(all, kD) -
-                     CD_dt_dy * (dm.Hz(all, kD) - dm.Hz(all, kD_pre)) -
-                     dm.Jx(all, kD);
-
-    // Bx
-    // -y
-    Phi_mx_yn =
-        b_mx_yn * Phi_mx_yn + a_mx_yn * (dm.Dz(all, knD) - dm.Dz(all, knD_pre));
-    dm.Hx(all, knD) = dm.Hx(all, knD) -
-                      C_Bx_dyn * (dm.Dz(all, knD) - dm.Dz(all, knD_pre)) -
-                      CB_dt * Phi_mx_yn;
-
-    // 正y轴方向的CPML区域中的Dx更新程序
-    Phi_mx_yp =
-        b_mx_yp * Phi_mx_yp + a_mx_yp * (dm.Dz(all, kpD) - dm.Dz(all, kpD_pre));
-    dm.Hx(all, kpD) = dm.Hx(all, kpD) -
-                      C_Bx_dyp * (dm.Dz(all, kpD) - dm.Dz(all, kpD_pre)) -
-                      CB_dt * Phi_mx_yp;
-
-    // 非PML域更新Dx
-    dm.Hx(all, kD) =
-        dm.Hx(all, kD) - CB_dt_dy * (dm.Dz(all, kD) - dm.Dz(all, kD_pre));
-
-    /**
-     * @brief y方向电磁场更新
-     *
-     */
-    auto inD = seq(1, dm.geo.n_pml_xn);
-    auto inD_pre = seq(0, dm.geo.n_pml_xn - 1);
-    auto ipD = seq(dm.geo.ni - dm.geo.n_pml_xp, dm.geo.ni - 1);
-    auto ipD_pre = seq(dm.geo.ni - 1 - dm.geo.n_pml_xp, dm.geo.ni - 2);
-    auto iD = seq(dm.geo.n_pml_xn + 1, dm.geo.ni - dm.geo.n_pml_xp - 1);
-    auto iD_pre = seq(dm.geo.n_pml_xn, dm.geo.ni - dm.geo.n_pml_xp - 2);
-
-    // Dy更新主循环程序
-    // 负x轴方向PML
-    Phi_ey_xn =
-        b_ey_xn * Phi_ey_xn + a_ey_xn * (dm.Hz(inD, all) - dm.Hz(inD, all));
-    dm.Dy(inD, all) = dm.Dy(inD, all) +
-                      C_Dy_dxn * (dm.Hz(inD, all) - dm.Hz(inD_pre, all)) +
-                      CD_dt * (Phi_ey_xn - dm.Jy(inD, all));
-
-    // 正y轴方向PML
-    Phi_ey_xp =
-        b_ey_xp * Phi_ey_xp + a_ey_xp * (dm.Hz(ipD, all) - dm.Hz(ipD, all));
-    dm.Dy(ipD, all) = dm.Dy(ipD, all) +
-                      C_Dy_dxp * (dm.Hz(ipD, all) - dm.Hz(ipD_pre, all)) +
-                      CD_dt * (Phi_ey_xp - dm.Jy(ipD, all));
-
-    // 非PML
-    dm.Dy(iD, all) = dm.Dy(iD, all) +
-                     CD_dt_dx * (dm.Hz(iD, all) - dm.Hz(iD_pre, all)) -
-                     dm.Jy(iD, all);
-
-    // By
-    // 负x轴方向PML
-    Phi_my_xn =
-        b_my_xn * Phi_my_xn + a_my_xn * (dm.Dz(inD, all) - dm.Dz(inD, all));
-    dm.Hy(inD, all) = dm.Hy(inD, all) +
-                      C_By_dxn * (dm.Dz(inD, all) - dm.Dz(inD_pre, all)) +
-                      CB_dt * Phi_my_xn;
-
-    // 正y轴方向PML
-    Phi_my_xp =
-        b_my_xp * Phi_my_xp + a_my_xp * (dm.Hz(ipD, all) - dm.Hz(ipD, all));
-    dm.Hy(ipD, all) = dm.Hy(ipD, all) +
-                      C_By_dxp * (dm.Dz(ipD, all) - dm.Dz(ipD_pre, all)) +
-                      CB_dt * Phi_my_xp;
-
-    // 非PML
-    dm.Hy(iD, all) =
-        dm.Hy(iD, all) + CB_dt_dx * (dm.Dz(iD, all) - dm.Dz(iD_pre, all));
+    // Update magnetic fields Hz
+#pragma omp parallel for
+    for (int i = 0; i < dm.geo.ni; ++i) {
+        for (int j = 0; j < dm.geo.nj; ++j) {
+            double tmp = dm.Bz(i, j);
+            dm.Bz(i, j) =
+                d1z(i) * dm.Bz(i, j) +
+                d2z(i) * (dm.Ex(i, j + 1) - dm.Ex(i, j) + dm.Ey(i, j) -
+                          dm.Ey(i + 1, j) - dm.Jz(i, j));
+            dm.Hz(i, j) = d3z(j) * dm.Hz(i, j) + d4z(j) * (dm.Bz(i, j) - tmp);
+        }
+    }
+    spdlog::debug("node 3 ok");
+}
+void Solver::EvaluateSource(double I, double f, double t) {
+#pragma omp parallel for
+    for (int i = 6 + 3; i < 20 - 3; i++) {
+        for (int j = 6 + 3; j < 20 - 3; j++) {
+            dm.Jz(5 + 2, j) = -I * sin(2 * Const::PI * f * t);
+            dm.Jz(20 - 2, j) = I * sin(2 * Const::PI * f * t);
+            dm.Jz(i, 5 + 2) = -I * cos(2 * Const::PI * f * t);
+            dm.Jz(i, 20 - 2) = I * cos(2 * Const::PI * f * t);
+        }
+    }
 }
