@@ -42,22 +42,49 @@ struct Solver {
     double d3;
     double d4;
 
+    // 计算Ex所用的系数
     double c1x;
     matrix c2x = matrix::Zero(dm.geo.ni, dm.geo.nj);
     matrix c3x = matrix::Zero(dm.geo.ni, dm.geo.nj);
     vector c4x = vector::Zero(dm.geo.ni);
     vector c5x = vector::Zero(dm.geo.ni);
 
+    // 计算Ey所用的系数
     double c1y;
     matrix c2y = matrix::Zero(dm.geo.ni, dm.geo.nj);
     matrix c3y = matrix::Zero(dm.geo.ni, dm.geo.nj);
     vector c4y = vector::Zero(dm.geo.nj);
     vector c5y = vector::Zero(dm.geo.nj);
 
+    // 计算Ez所用的系数
+    vector c1z = vector::Zero(dm.geo.ni);
+    vector c2z = vector::Zero(dm.geo.ni);
+    vector c3z = vector::Zero(dm.geo.nj);
+    vector c4z = vector::Zero(dm.geo.nj);
+    vector c5z = vector::Zero(dm.geo.nj);
+    vector c6z = vector::Zero(dm.geo.nj);
+
+    // 计算Hx所用的系数
+    double d1x;
+    matrix d2x = matrix::Zero(dm.geo.ni, dm.geo.nj);
+    matrix d3x = matrix::Zero(dm.geo.ni, dm.geo.nj);
+    vector d4x = vector::Zero(dm.geo.ni);
+    vector d5x = vector::Zero(dm.geo.ni);
+
+    // 计算Hy所用的系数
+    double d1y;
+    matrix d2y = matrix::Zero(dm.geo.ni, dm.geo.nj);
+    matrix d3y = matrix::Zero(dm.geo.ni, dm.geo.nj);
+    vector d4y = vector::Zero(dm.geo.nj);
+    vector d5y = vector::Zero(dm.geo.nj);
+
+    // 计算Hz所用的系数
     vector d1z = vector::Zero(dm.geo.ni);
     vector d2z = vector::Zero(dm.geo.ni);
     vector d3z = vector::Zero(dm.geo.nj);
     vector d4z = vector::Zero(dm.geo.nj);
+    vector d5z = vector::Zero(dm.geo.nj);
+    vector d6z = vector::Zero(dm.geo.nj);
 
     vector gradientC2 = vector::Zero(dm.geo.npml);
     vector gradientC3 = vector::Zero(dm.geo.npml);
@@ -68,6 +95,8 @@ struct Solver {
     vector gradientD2 = vector::Zero(dm.geo.npml);
     vector gradientD3 = vector::Zero(dm.geo.npml);
     vector gradientD4 = vector::Zero(dm.geo.npml);
+    vector gradientD5 = vector::Zero(dm.geo.npml);
+    vector gradientD6 = vector::Zero(dm.geo.npml);
 
     void Init();
 

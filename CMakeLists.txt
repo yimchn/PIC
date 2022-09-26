@@ -22,5 +22,5 @@ add_executable(EMF ${SRC_DIR} example/EMF.cpp)
 target_link_libraries(EMF PRIVATE Eigen3::Eigen spdlog::spdlog spdlog::spdlog_header_only)
 
 # 测试程序
-# add_executable(TEST test/test.cpp)
-# target_link_libraries(TEST PRIVATE Eigen3::Eigen spdlog::spdlog spdlog::spdlog_header_only)
+ add_executable(TEST test/test.cpp)
+ target_link_libraries(TEST PRIVATE Eigen3::Eigen spdlog::spdlog spdlog::spdlog_header_only)

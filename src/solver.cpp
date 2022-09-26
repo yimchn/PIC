@@ -8,12 +8,13 @@
 #include "field.h"
 
 Solver::Solver(Domain &dm, int max_it, double tol)
-    : dm(dm), max_solver_it(max_it), tolerance(tol) {
+        : dm(dm), max_solver_it(max_it), tolerance(tol) {
     Init();
     spdlog::debug("Initial success");
     UpdatePml();
     spdlog::debug("All of the parameters have been allocated");
 }
+
 void Solver::Init() {
     dt = dm.getDt();
     delta = dm.geo.dh[0];
@@ -27,7 +28,7 @@ void Solver::Init() {
 
     double tmp1 = Const::EPS_0 * eps_r / dt;
     double tmp2 = sigma / 2;
-    c1 = dt / (Const::EPS_0 * eps_r * dm.geo.dh[0]);
+    c1 = dt / (Const::EPS_0 * eps_r * delta);
     c2 = (tmp1 - tmp2) / (tmp1 + tmp2);
     c3 = 1 / (tmp1 + tmp2);
     c4 = tmp1;
@@ -54,6 +55,23 @@ void Solver::Init() {
     d2z = d2;
     d3z = d3;
     d4z = d4;
+
+    d1x = dt / (Const::MU_0 * mu_r * delta);
+    d2x = c2;
+    d3x = c3;
+    d4x = c4;
+    d5x = c5;
+
+    d1y = -dt / (Const::MU_0 * mu_r * delta);
+    d2x = c2;
+    d3x = c3;
+    d4x = c4;
+    d5x = c5;
+
+    c1z = d1;
+    c2z = c2;
+    c3z = c3;
+    c4z = 1 / Const::EPS_0;
 }
 
 void Solver::UpdatePml() {
@@ -75,7 +93,7 @@ void Solver::UpdatePml() {
             gradient_conductivity = boundary_factor * (pow(x1, m + 1));
         } else {
             gradient_conductivity =
-                boundary_factor * (pow(x1, m + 1) - pow(x2, m + 1));
+                    boundary_factor * (pow(x1, m + 1) - pow(x2, m + 1));
         }
 
         double tmp1 = gradient_k * Const::EPS_0 / dt;
@@ -88,7 +106,7 @@ void Solver::UpdatePml() {
         x2 = (x + 0) * delta;
 
         gradient_conductivity =
-            boundary_factor * (pow(x1, m + 1) - pow(x2, m + 1));
+                boundary_factor * (pow(x1, m + 1) - pow(x2, m + 1));
 
         tmp1 = gradient_k * Const::EPS_0 / dt;
         tmp2 = gradient_conductivity / 2;
@@ -219,7 +237,7 @@ void Solver::computeEF() {
     for (int i = 0; i < dm.geo.ni; i++)
         for (int j = 0; j < dm.geo.nj; j++) {
             Vec3d &E = dm.E[i][j];  // reference to (i,j,k) E
-                                    // vec3
+            // vec3
 
             /*x component*/
             if (i == 0) /*forward*/
@@ -242,9 +260,47 @@ void Solver::computeEF() {
                 E[1] = -(phi[i][j + 1] - phi[i][j - 1]) / (2 * dy);
         }
 }
-void Solver::EvaluateFdtd() {
-    // Update electirc fields (Ex and Ey)
 
+void Solver::EvaluateFdtd() {
+    // Update magnetic fields (Hx and Hy)
+#pragma omp parallel for
+    for (int i = 0; i < dm.geo.ni; ++i) {
+        for (int j = 1; j < dm.geo.nj; ++j) {
+            double tmp = dm.Bx(i, j);
+            dm.Bx(i, j) += c1x * (dm.Ez(i, j) - dm.Ez(i, j - 1));
+            dm.Hx(i, j) = c2x(i, j) * dm.Hx(i, j) +
+                          c3x(i, j) * (c4x(i) * dm.Bx(i, j) + c5x(i) * tmp);
+        }
+    }
+    spdlog::debug("node 1 ok");
+
+#pragma omp parallel for
+    for (int i = 1; i < dm.geo.ni; ++i) {
+        for (int j = 0; j < dm.geo.nj; ++j) {
+            double tmp = dm.By(i, j);
+            dm.By(i, j) += c1y * (dm.Ez(i - 1, j) - dm.Ez(i, j));
+            dm.Hy(i, j) = c2y(i, j) * dm.Hy(i, j) +
+                          c3y(i, j) * (c4y(i) * dm.By(i, j) + c5y(i) * tmp);
+        }
+    }
+    spdlog::debug("node 2 ok");
+
+    // Update electric fields Ez
+#pragma omp parallel for
+    for (int i = 0; i < dm.geo.ni; ++i) {
+        for (int j = 0; j < dm.geo.nj; ++j) {
+            double tmp = dm.Dz(i, j);
+            double tmp2 = dm.Jz(i, j);
+            dm.Dz(i, j) =
+                    d1z(i) * dm.Dz(i, j) +
+                    d2z(i) * (dm.Hx(i, j + 1) - dm.Hx(i, j) + dm.Hy(i, j) -
+                              dm.Hy(i + 1, j)) - d4z(j);
+            dm.Ez(i, j) = d3z(j) * dm.Ez(i, j) + d4z(j) * (dm.Dz(i, j) - tmp);
+        }
+    }
+    spdlog::debug("node 3 ok");
+
+    // Update electirc fields (Ex and Ey)
 #pragma omp parallel for
     for (int i = 0; i < dm.geo.ni; ++i) {
         for (int j = 1; j < dm.geo.nj; ++j) {
@@ -254,7 +310,7 @@ void Solver::EvaluateFdtd() {
                           c3x(i, j) * (c4x(i) * dm.Dx(i, j) + c5x(i) * tmp);
         }
     }
-    spdlog::debug("node 1 ok");
+    spdlog::debug("node 4 ok");
 
 #pragma omp parallel for
     for (int i = 1; i < dm.geo.ni; ++i) {
@@ -265,7 +321,7 @@ void Solver::EvaluateFdtd() {
                           c3y(i, j) * (c4y(i) * dm.Dy(i, j) + c5y(i) * tmp);
         }
     }
-    spdlog::debug("node 2 ok");
+    spdlog::debug("node 5 ok");
 
     // Update magnetic fields Hz
 #pragma omp parallel for
@@ -273,14 +329,15 @@ void Solver::EvaluateFdtd() {
         for (int j = 0; j < dm.geo.nj; ++j) {
             double tmp = dm.Bz(i, j);
             dm.Bz(i, j) =
-                d1z(i) * dm.Bz(i, j) +
-                d2z(i) * (dm.Ex(i, j + 1) - dm.Ex(i, j) + dm.Ey(i, j) -
-                          dm.Ey(i + 1, j) - dm.Jz(i, j));
+                    d1z(i) * dm.Bz(i, j) +
+                    d2z(i) * (dm.Ex(i, j + 1) - dm.Ex(i, j) + dm.Ey(i, j) -
+                              dm.Ey(i + 1, j));
             dm.Hz(i, j) = d3z(j) * dm.Hz(i, j) + d4z(j) * (dm.Bz(i, j) - tmp);
         }
     }
-    spdlog::debug("node 3 ok");
+    spdlog::debug("node 6 ok");
 }
+
 void Solver::EvaluateSource(double I, double f, double t) {
 #pragma omp parallel for
     for (int i = 6 + 3; i < 20 - 3; i++) {

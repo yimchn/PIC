@@ -27,13 +27,13 @@ struct Domain {
     Eigen::ArrayXXd Dy = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
     Eigen::ArrayXXd Dz = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
 
+    Eigen::ArrayXXd Hx = Eigen::ArrayXXd::Zero(geo.ni, geo.nj + 1);
+    Eigen::ArrayXXd Hy = Eigen::ArrayXXd::Zero(geo.ni + 1, geo.nj);
+    Eigen::ArrayXXd Hz = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
+
     Eigen::ArrayXXd Bx = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
     Eigen::ArrayXXd By = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
     Eigen::ArrayXXd Bz = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
-
-    Eigen::ArrayXXd Hx = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
-    Eigen::ArrayXXd Hy = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
-    Eigen::ArrayXXd Hz = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
 
     Eigen::ArrayXXd Jx = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
     Eigen::ArrayXXd Jy = Eigen::ArrayXXd::Zero(geo.ni, geo.nj);
@@ -45,16 +45,19 @@ struct Domain {
     int num_ts = 0;   // number of time steps
 
     std::chrono::time_point<std::chrono::high_resolution_clock>
-        time_start;  // time at simulation start
+            time_start;  // time at simulation start
 
     /*constructor, allocates memory*/
     Domain(Geometry geo);
 
     /*functions for accessing time information*/
     int getTs() const;
+
     double getTime() const;
+
     double getWallTime(); /*returns wall time in seconds*/
     double getDt() const;
+
     bool isLastTimeStep() const;
 
     /*sets time step and number of time steps*/
