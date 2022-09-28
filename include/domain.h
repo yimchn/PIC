@@ -9,6 +9,8 @@
 
 struct Species;
 
+using matrix = Eigen::ArrayXXd;
+
 /*defines the computational dm*/
 struct Domain {
     Geometry geo;
@@ -19,17 +21,25 @@ struct Domain {
     Field<Vec3d> H;     // magnetic field componets
     Field<Vec3d> J;     // current density
 
-    Eigen::ArrayXXd Dx;
-    Eigen::ArrayXXd Dy;
-    Eigen::ArrayXXd Dz;
+    matrix Dx=matrix::Zero(geo.ni,geo.nj);
+    matrix Dy=matrix::Zero(geo.ni,geo.nj);
+    matrix Dz=matrix::Zero(geo.ni,geo.nj);
 
-    Eigen::ArrayXXd Hx;
-    Eigen::ArrayXXd Hy;
-    Eigen::ArrayXXd Hz;
+    matrix Ex=matrix::Zero(geo.ni,geo.nj);
+    matrix Ey=matrix::Zero(geo.ni,geo.nj);
+    matrix Ez=matrix::Zero(geo.ni,geo.nj);
 
-    Eigen::ArrayXXd Jx;
-    Eigen::ArrayXXd Jy;
-    Eigen::ArrayXXd Jz;
+    matrix Bx=matrix::Zero(geo.ni,geo.nj);
+    matrix By=matrix::Zero(geo.ni,geo.nj);
+    matrix Bz=matrix::Zero(geo.ni,geo.nj);
+
+    matrix Hx=matrix::Zero(geo.ni,geo.nj);
+    matrix Hy=matrix::Zero(geo.ni,geo.nj);
+    matrix Hz=matrix::Zero(geo.ni,geo.nj);
+
+    matrix Jx=matrix::Zero(geo.ni,geo.nj);
+    matrix Jy=matrix::Zero(geo.ni,geo.nj);
+    matrix Jz=matrix::Zero(geo.ni,geo.nj);
 
     double dt = 0;    // time step length
     double time = 0;  // physical time

@@ -14,18 +14,6 @@ Domain::Domain(Geometry geo)
       J(geo.ni, geo.nj) {
     time_start =
         std::chrono::high_resolution_clock::now();  // save starting time point
-
-    Dx.resize(geo.ni, geo.nj);
-    Dy.resize(geo.ni, geo.nj);
-    Dz.resize(geo.ni, geo.nj);
-
-    Hx.resize(geo.ni, geo.nj);
-    Hy.resize(geo.ni, geo.nj);
-    Hz.resize(geo.ni, geo.nj);
-
-    Jx.resize(geo.ni, geo.nj);
-    Jy.resize(geo.ni, geo.nj);
-    Jz.resize(geo.ni, geo.nj);
 }
 
 int Domain::getTs() const { return ts; }

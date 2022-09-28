@@ -25,12 +25,13 @@ int main(int argc, char *argv[]) {
     Solver solver(dm, 10000, 1e-4);
 
     std::cout << "Start calculation" << std::endl;
-    while (dm.advanceTime()) {
-        std::cout << "Satrat calculate step: " << dm.ts << "/" << step
-                  << std::endl;
-        solver.UpdateBoundary(dm, I, f);
-        if (dm.ts % 1000 == 0) Output::fields(dm);
-    }
+//    while (dm.advanceTime()) {
+//        std::cout << "Satrat calculate step: " << dm.ts << "/" << step
+//                  << std::endl;
+//        solver.UpdateBoundary(dm, I, f);
+//        if (dm.ts % 1000 == 0) Output::fields(dm);
+//    }
+    std::cout << solver.kappa_m_xn<< std::endl;
     std::cout << "Calculation complete" << std::endl;
 
     return 0;
