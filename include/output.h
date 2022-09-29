@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <iostream>
 #include <vector>
 
 #include "domain.h"
@@ -12,4 +13,5 @@ void fields(Domain &domain);
 void screenOutput(Domain &domain, std::vector<Species> &species);
 void diagOutput(Domain &domain, std::vector<Species> &species);
 void Display(Domain &domain, Field<Vec3d> field);
+void ProgressBar(double cur, double total);
 }  // namespace Output

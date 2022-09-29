@@ -100,17 +100,11 @@ void Output::fields(Domain &domain) {
         for (int j = 0; j < domain.geo.nj; j++) {
             out << i << " ";
             out << j << " ";
-            //            out << domain.H[i][j][0] << " ";
-            //            out << domain.H[i][j][1] << " ";
-            //            out << domain.H[i][j][2] << " ";
-            //            out << domain.E[i][j][0] << " ";
-            //            out << domain.E[i][j][1] << " ";
-            //            out << domain.E[i][j][2] << " ";
-            //            out << domain.J[i][j][0] << " ";
-            //            out << domain.J[i][j][1] << " ";
-            //            out << domain.J[i][j][2] << "\n";
             out << domain.Hx(i, j) << " ";
             out << domain.Hy(i, j) << " ";
+            //            out << sqrt(pow(domain.Hx(i, j), 2) + pow(domain.Hy(i,
+            //            j), 2))
+            //                << " ";
             out << domain.Hz(i, j) << " ";
             out << domain.Dx(i, j) << " ";
             out << domain.Dy(i, j) << " ";
@@ -124,6 +118,25 @@ void Output::fields(Domain &domain) {
     // out << dm.E;
 
     out.close();
+}
+
+void Output::ProgressBar(double cur, double total) {
+    double progress = static_cast<double>(cur) / static_cast<double>(total);
+    int bar_width = 70;
+
+    std::cout << "[";
+    int pos = bar_width * progress;
+    for (int i = 0; i < bar_width; ++i) {
+        if (i < pos)
+            std::cout << "=";
+        else if (i == pos)
+            std::cout << ">";
+        else
+            std::cout << " ";
+    }
+    std::cout << "] " << std::fixed << std::setprecision(2) << (progress * 100)
+              << "%\r";
+    std::cout.flush();
 }
 
 // writes information to the screen

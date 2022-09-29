@@ -10,29 +10,31 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    spdlog::set_level(spdlog::level::debug);
+    // spdlog::set_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::info);
+
     double f = 3e5;  // frenquency, Hz
-    int step = 150000;
-    // int step = 400;
     double I = 100;
 
     Geometry geo;
-    geo.SetExtents({-0.1, -0.1}, {0.1, 0.1});
+    // Geometry geo(52, 52, 12, 12, 12, 12);
+    geo.SetExtents({-0.01, -0.01}, {0.01, 0.01});
+
+    double dt = geo.dh[0] / (Const::C * sqrt(2));
+    int step = static_cast<int>(1 / (f * dt));
 
     Domain dm(geo);
-    dm.setTime(1 / f / step, step);
+    dm.setTime(dt, step);
 
     Solver solver(dm, 10000, 1e-4);
 
-    std::cout << "Start calculation" << std::endl;
-//    while (dm.advanceTime()) {
-//        std::cout << "Satrat calculate step: " << dm.ts << "/" << step
-//                  << std::endl;
-//        solver.UpdateBoundary(dm, I, f);
-//        if (dm.ts % 1000 == 0) Output::fields(dm);
-//    }
-    std::cout << solver.kappa_m_xn<< std::endl;
-    std::cout << "Calculation complete" << std::endl;
+    std::cout << "Calculating..." << std::endl;
+    while (dm.advanceTime()) {
+        Output::ProgressBar(dm.ts, step);
+        solver.UpdateBoundary(dm, I, f);
+        if (dm.ts % 1000 == 0) Output::fields(dm);
+    }
+    std::cout << "\nCalculation complete" << std::endl;
 
     return 0;
 }

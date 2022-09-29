@@ -22,7 +22,7 @@ struct Geometry {
     Field<double> node_area;  // node volumes
 
     Geometry();
-    Geometry(int ni, int nj);
+    Geometry(int ni, int nj, int xn, int xp, int yn, int yp);
 
     // int GetNi() const;
 

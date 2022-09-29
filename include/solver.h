@@ -154,53 +154,53 @@ struct Solver {
     vector C_Dz_dyn_v = vector::Zero(dm.geo.n_pml_yn);
     vector C_Dz_dyp_v = vector::Zero(dm.geo.n_pml_yp);
 
-    matrix Phi_ez_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix b_ez_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix a_ez_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix C_Dz_dxn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
+    matrix Phi_ez_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix b_ez_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix a_ez_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix C_Dz_dxn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
 
-    matrix Phi_ez_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix b_ez_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix a_ez_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix C_Dz_dxp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
+    matrix Phi_ez_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix b_ez_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix a_ez_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix C_Dz_dxp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
 
-    matrix Phi_ez_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix b_ez_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix a_ez_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix C_Dz_dyn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
+    matrix Phi_ez_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix b_ez_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix a_ez_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix C_Dz_dyn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
 
-    matrix Phi_ez_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
-    matrix b_ez_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
-    matrix a_ez_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
-    matrix C_Dz_dyp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
+    matrix Phi_ez_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix b_ez_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix a_ez_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix C_Dz_dyp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
 
     // Bx
     vector C_Bx_dyn_v = vector::Zero(dm.geo.n_pml_yn);
     vector C_Bx_dyp_v = vector::Zero(dm.geo.n_pml_yp);
 
-    matrix Phi_mx_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix b_mx_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix a_mx_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix C_Bx_dyn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
+    matrix Phi_mx_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix b_mx_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix a_mx_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix C_Bx_dyn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
 
-    matrix Phi_mx_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
-    matrix b_mx_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
-    matrix a_mx_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
-    matrix C_Bx_dyp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
+    matrix Phi_mx_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix b_mx_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix a_mx_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix C_Bx_dyp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
 
     // By
     vector C_By_dxn_v = vector::Zero(dm.geo.n_pml_xn);
     vector C_By_dxp_v = vector::Zero(dm.geo.n_pml_xp);
 
-    matrix Phi_my_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix b_my_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix a_my_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix C_By_dxn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
+    matrix Phi_my_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix b_my_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix a_my_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix C_By_dxn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
 
-    matrix Phi_my_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix b_my_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix a_my_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix C_By_dxp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
+    matrix Phi_my_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix b_my_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix a_my_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix C_By_dxp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
 
     // Bz
     vector C_Bz_dxn_v = vector::Zero(dm.geo.n_pml_xn);
@@ -242,4 +242,8 @@ struct Solver {
     void CalculFdtdCoeff(Domain &domain);
     // update the magnetic and electric field under 2d using FDTD method
     void UpdateBoundary(Domain &domain, double I, double f);
+    void UpdateSource(Domain &dm, double I, double f, double t);
+    void UpdateDz(Domain &dm);
+    void UpdateBx(Domain &dm);
+    void UpdateBy(Domain &dm);
 };

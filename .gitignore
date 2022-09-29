@@ -1,6 +1,6 @@
-# 忽略
 .cache/
 .idea/
 build/
-results/
+results/*.dat
 cmake-build-debug/
+cmake-build-release/

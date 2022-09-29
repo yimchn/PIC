@@ -10,14 +10,14 @@ Geometry::Geometry()
       n_pml_yp(5),
       node_area{26, 26} {}
 
-Geometry::Geometry(int ni, int nj)
-    : ni{ni},
-      nj{nj},
+Geometry::Geometry(int ni, int nj, int xn, int xp, int yn, int yp)
+    : ni(ni),
+      nj(nj),
+      n_pml_xn(xn),
+      n_pml_xp(xp),
+      n_pml_yn(yn),
+      n_pml_yp(yp),
       nn{ni, nj},
-      n_pml_xn(10),
-      n_pml_xp(10),
-      n_pml_yn(10),
-      n_pml_yp(10),
       node_area{ni, nj} {}
 
 // int Geometry::GetNi() const { return ni; }
