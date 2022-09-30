@@ -8,11 +8,12 @@
 #include "field.h"
 
 Solver::Solver(Domain &dm, int max_it, double tol)
-    : dm(dm), max_solver_it(max_it), tolerance(tol) {
+        : dm(dm), max_solver_it(max_it), tolerance(tol) {
     spdlog::debug("All of the parameters have been allocated");
     InitFdtdPara(dm);
     CalculFdtdCoeff(dm);
 }
+
 void Solver::CalculFdtdCoeff(Domain &dm) {
     CD_dt = dm.getDt();
     CD_dt_dx = CD_dt / dm.geo.dh[0];
@@ -179,34 +180,34 @@ void Solver::InitFdtdPara(Domain &dm) {
 
     // 设置sigma参数
     sigma_max_xn =
-        sigma_factor_xn * (m_pml + 1) /
-        (150 * Const::PI * sqrt(eps_r_pml_xn * mu_r_pml_xn) * dm.geo.dh[0]);
+            sigma_factor_xn * (m_pml + 1) /
+            (150 * Const::PI * sqrt(eps_r_pml_xn * mu_r_pml_xn) * dm.geo.dh[0]);
     sigma_max_xp =
-        sigma_factor_xp * (m_pml + 1) /
-        (150 * Const::PI * sqrt(eps_r_pml_xp * mu_r_pml_xp) * dm.geo.dh[0]);
+            sigma_factor_xp * (m_pml + 1) /
+            (150 * Const::PI * sqrt(eps_r_pml_xp * mu_r_pml_xp) * dm.geo.dh[0]);
 
     sigma_max_yn =
-        sigma_factor_yn * (m_pml + 1) /
-        (150 * Const::PI * sqrt(eps_r_pml_yn * mu_r_pml_yn) * dm.geo.dh[1]);
+            sigma_factor_yn * (m_pml + 1) /
+            (150 * Const::PI * sqrt(eps_r_pml_yn * mu_r_pml_yn) * dm.geo.dh[1]);
     sigma_max_yp =
-        sigma_factor_yp * (m_pml + 1) /
-        (150 * Const::PI * sqrt(eps_r_pml_yp * mu_r_pml_yp) * dm.geo.dh[1]);
+            sigma_factor_yp * (m_pml + 1) /
+            (150 * Const::PI * sqrt(eps_r_pml_yp * mu_r_pml_yp) * dm.geo.dh[1]);
 
     sigma_e_xn = sigma_max_xn * pow(rho_e_xn, m_pml);
     sigma_m_xn =
-        Const::MU_0 / Const::EPS_0 * sigma_max_xn * pow(rho_m_xn, m_pml);
+            Const::MU_0 / Const::EPS_0 * sigma_max_xn * pow(rho_m_xn, m_pml);
 
     sigma_e_xp = sigma_max_xp * pow(rho_e_xp, m_pml);
     sigma_m_xp =
-        Const::MU_0 / Const::EPS_0 * sigma_max_xp * pow(rho_m_xp, m_pml);
+            Const::MU_0 / Const::EPS_0 * sigma_max_xp * pow(rho_m_xp, m_pml);
 
     sigma_e_yn = sigma_max_yn * pow(rho_e_yn, m_pml);
     sigma_m_yn =
-        Const::MU_0 / Const::EPS_0 * sigma_max_yn * pow(rho_m_yn, m_pml);
+            Const::MU_0 / Const::EPS_0 * sigma_max_yn * pow(rho_m_yn, m_pml);
 
     sigma_e_yp = sigma_max_yp * pow(rho_e_yp, m_pml);
     sigma_m_yp =
-        Const::MU_0 / Const::EPS_0 * sigma_max_yp * pow(rho_m_yp, m_pml);
+            Const::MU_0 / Const::EPS_0 * sigma_max_yp * pow(rho_m_yp, m_pml);
 
     // 设置kappa参数
     kappa_e_xn = 1 + (kappa_max_xn - 1) * pow(rho_e_xn, m_pml);
@@ -238,51 +239,51 @@ void Solver::InitFdtdPara(Domain &dm) {
     b_e_xn_v = exp(-(sigma_e_xn / kappa_e_xn + alpha_e_xn) * dm.getDt() /
                    Const::EPS_0);
     b_m_xn_v =
-        exp(-(sigma_m_xn / kappa_m_xn + alpha_m_xn) * dm.getDt() / Const::MU_0);
+            exp(-(sigma_m_xn / kappa_m_xn + alpha_m_xn) * dm.getDt() / Const::MU_0);
 
     b_e_xp_v = exp(-(sigma_e_xp / kappa_e_xp + alpha_e_xp) * dm.getDt() /
                    Const::EPS_0);
     b_m_xp_v =
-        exp(-(sigma_m_xp / kappa_m_xp + alpha_m_xp) * dm.getDt() / Const::MU_0);
+            exp(-(sigma_m_xp / kappa_m_xp + alpha_m_xp) * dm.getDt() / Const::MU_0);
 
     b_e_yn_v = exp(-(sigma_e_yn / kappa_e_yn + alpha_e_yn) * dm.getDt() /
                    Const::EPS_0);
     b_m_yn_v =
-        exp(-(sigma_m_yn / kappa_m_yn + alpha_m_yn) * dm.getDt() / Const::MU_0);
+            exp(-(sigma_m_yn / kappa_m_yn + alpha_m_yn) * dm.getDt() / Const::MU_0);
 
     b_e_yp_v = exp(-(sigma_e_yp / kappa_e_yp + alpha_e_yp) * dm.getDt() /
                    Const::EPS_0);
     b_m_yp_v =
-        exp(-(sigma_m_yp / kappa_m_yp + alpha_m_yp) * dm.getDt() / Const::MU_0);
+            exp(-(sigma_m_yp / kappa_m_yp + alpha_m_yp) * dm.getDt() / Const::MU_0);
 
     // a
     a_e_xn_v =
-        sigma_e_xn * (b_e_xn_v - 1) /
-        (dm.geo.dh[0] * kappa_e_xn * (sigma_e_xn + alpha_e_xn * kappa_e_xn));
+            sigma_e_xn * (b_e_xn_v - 1) /
+            (dm.geo.dh[0] * kappa_e_xn * (sigma_e_xn + alpha_e_xn * kappa_e_xn));
     a_m_xn_v =
-        sigma_m_xn * (b_m_xn_v - 1) /
-        (dm.geo.dh[0] * kappa_m_xn * (sigma_m_xn + alpha_m_xn * kappa_m_xn));
+            sigma_m_xn * (b_m_xn_v - 1) /
+            (dm.geo.dh[0] * kappa_m_xn * (sigma_m_xn + alpha_m_xn * kappa_m_xn));
 
     a_e_xp_v =
-        sigma_e_xp * (b_e_xp_v - 1) /
-        (dm.geo.dh[0] * kappa_e_xp * (sigma_e_xp + alpha_e_xp * kappa_e_xp));
+            sigma_e_xp * (b_e_xp_v - 1) /
+            (dm.geo.dh[0] * kappa_e_xp * (sigma_e_xp + alpha_e_xp * kappa_e_xp));
     a_m_xp_v =
-        sigma_m_xp * (b_m_xp_v - 1) /
-        (dm.geo.dh[0] * kappa_m_xp * (sigma_m_xp + alpha_m_xp * kappa_m_xp));
+            sigma_m_xp * (b_m_xp_v - 1) /
+            (dm.geo.dh[0] * kappa_m_xp * (sigma_m_xp + alpha_m_xp * kappa_m_xp));
 
     a_e_yn_v =
-        sigma_e_yn * (b_e_yn_v - 1) /
-        (dm.geo.dh[0] * kappa_e_yn * (sigma_e_yn + alpha_e_yn * kappa_e_yn));
+            sigma_e_yn * (b_e_yn_v - 1) /
+            (dm.geo.dh[0] * kappa_e_yn * (sigma_e_yn + alpha_e_yn * kappa_e_yn));
     a_m_yn_v =
-        sigma_m_yn * (b_m_yn_v - 1) /
-        (dm.geo.dh[0] * kappa_m_yn * (sigma_m_yn + alpha_m_yn * kappa_m_yn));
+            sigma_m_yn * (b_m_yn_v - 1) /
+            (dm.geo.dh[0] * kappa_m_yn * (sigma_m_yn + alpha_m_yn * kappa_m_yn));
 
     a_e_yp_v =
-        sigma_e_yp * (b_e_yp_v - 1) /
-        (dm.geo.dh[0] * kappa_e_yp * (sigma_e_yp + alpha_e_yp * kappa_e_yp));
+            sigma_e_yp * (b_e_yp_v - 1) /
+            (dm.geo.dh[0] * kappa_e_yp * (sigma_e_yp + alpha_e_yp * kappa_e_yp));
     a_m_yp_v =
-        sigma_m_yp * (b_m_yp_v - 1) /
-        (dm.geo.dh[0] * kappa_m_yp * (sigma_m_yp + alpha_m_yp * kappa_m_yp));
+            sigma_m_yp * (b_m_yp_v - 1) /
+            (dm.geo.dh[0] * kappa_m_yp * (sigma_m_yp + alpha_m_yp * kappa_m_yp));
 
     spdlog::debug("All of the parameters have been calculated");
 }
@@ -354,7 +355,7 @@ void Solver::computeEF() {
     for (int i = 0; i < dm.geo.ni; i++)
         for (int j = 0; j < dm.geo.nj; j++) {
             Vec3d &E = dm.E[i][j];  // reference to (i,j,k) E
-                                    // vec3
+            // vec3
 
             /*x component*/
             if (i == 0) /*forward*/
@@ -508,6 +509,7 @@ void Solver::UpdateBoundary(Domain &dm, double I, double f) {
     //                     CD_dt_dx * (dm.Hz(iD, all) - dm.Hz(iD_pre, all)) -
     //                     dm.Jy(iD, all);
 }
+
 void Solver::UpdateBy(Domain &dm) {
 // By
 // 负x轴方向PML
@@ -530,12 +532,12 @@ void Solver::UpdateBy(Domain &dm) {
             int tmp = dm.geo.nj - dm.geo.n_pml_xp + i;
 
             Phi_my_xp(i, j) =
-                b_my_xp(i, j) * Phi_my_xp(i, j) +
-                a_my_xp(i, j) * (dm.Dz(tmp, j) - dm.Dz(tmp - 1, j));
+                    b_my_xp(i, j) * Phi_my_xp(i, j) +
+                    a_my_xp(i, j) * (dm.Dz(tmp, j) - dm.Dz(tmp - 1, j));
 
             dm.Hy(i, j) +=
-                C_By_dxp(i, j) * (dm.Dz(tmp, j) - dm.Dz(tmp - 1, j)) +
-                CB_dt * Phi_my_xp(i, j);
+                    C_By_dxp(i, j) * (dm.Dz(tmp, j) - dm.Dz(tmp - 1, j)) +
+                    CB_dt * Phi_my_xp(i, j);
         }
     }
     spdlog::debug("by +x ok");
@@ -571,12 +573,12 @@ void Solver::UpdateBx(Domain &dm) {
             int tmp = dm.geo.ni - dm.geo.n_pml_yp + j;
 
             Phi_mx_yp(i, j) =
-                b_mx_yp(i, j) * Phi_mx_yp(i, j) +
-                a_mx_yp(i, j) * (dm.Dz(i, tmp) - dm.Dz(i, tmp - 1));
+                    b_mx_yp(i, j) * Phi_mx_yp(i, j) +
+                    a_mx_yp(i, j) * (dm.Dz(i, tmp) - dm.Dz(i, tmp - 1));
 
             dm.Hx(i, j) -=
-                C_Bx_dyp(i, j) * (dm.Dz(i, tmp) - dm.Dz(i, tmp - 1)) +
-                CB_dt * Phi_mx_yp(i, j);
+                    C_Bx_dyp(i, j) * (dm.Dz(i, tmp) - dm.Dz(i, tmp - 1)) +
+                    CB_dt * Phi_mx_yp(i, j);
         }
     }
     spdlog::debug("bx +y ok");
@@ -613,12 +615,12 @@ void Solver::UpdateDz(Domain &dm) {
         for (int j = 0; j < dm.geo.ni; ++j) {
             int tmp = dm.geo.nj - dm.geo.n_pml_xp + i;
             Phi_ez_xp(i, j) =
-                b_ez_xp(i, j) * Phi_ez_xp(i, j) +
-                a_ez_xp(i, j) * (dm.Hy(tmp, j) - dm.Hy(tmp - 1, j));
+                    b_ez_xp(i, j) * Phi_ez_xp(i, j) +
+                    a_ez_xp(i, j) * (dm.Hy(tmp, j) - dm.Hy(tmp - 1, j));
 
             dm.Dz(i, j) -=
-                C_Dz_dxp(i, j) * (dm.Hy(tmp, j) - dm.Hy(tmp - 1, j)) -
-                CD_dt * Phi_ez_xp(i, j);
+                    C_Dz_dxp(i, j) * (dm.Hy(tmp, j) - dm.Hy(tmp - 1, j)) -
+                    CD_dt * Phi_ez_xp(i, j);
         }
     }
     spdlog::debug("dz +x ok");
@@ -653,12 +655,12 @@ void Solver::UpdateDz(Domain &dm) {
             int tmp = dm.geo.ni - dm.geo.n_pml_yp + j;
 
             Phi_ez_yp(i, j) =
-                b_ez_yp(i, j) * Phi_ez_yp(i, j) +
-                a_ez_yp(i, j) * (dm.Hx(i, tmp) - dm.Hx(i, tmp - 1));
+                    b_ez_yp(i, j) * Phi_ez_yp(i, j) +
+                    a_ez_yp(i, j) * (dm.Hx(i, tmp) - dm.Hx(i, tmp - 1));
 
             dm.Dz(i, j) +=
-                C_Dz_dyp(i, j) * (dm.Hx(i, tmp) - dm.Hx(i, tmp - 1)) +
-                CD_dt * (Phi_ez_yp(i, j) - dm.Jz(i, tmp));
+                    C_Dz_dyp(i, j) * (dm.Hx(i, tmp) - dm.Hx(i, tmp - 1)) +
+                    CD_dt * (Phi_ez_yp(i, j) - dm.Jz(i, tmp));
         }
     }
     spdlog::debug("dz +y ok");
@@ -668,22 +670,23 @@ void Solver::UpdateDz(Domain &dm) {
     for (int i = 0; i < dm.geo.nj; ++i) {
         for (int j = dm.geo.n_pml_yn; j < dm.geo.ni - dm.geo.n_pml_yp; ++j) {
             dm.Dz(i, j) +=
-                CD_dt_dy * dm.Hx(i, j) - dm.Hx(i, j - 1) - CD_dt * dm.Jz(i, j);
+                    CD_dt_dy * dm.Hx(i, j) - dm.Hx(i, j - 1) - CD_dt * dm.Jz(i, j);
         }
     }
     spdlog::debug("dz y ok");
 }
 
 void Solver::UpdateSource(Domain &dm, double I, double f, double t) {
-#pragma omp parallel for collapse(2)
-    for (int i = 6 + 5; i < 20 - 5; i++) {
-        for (int j = 6 + 5; j < 20 - 5; j++) {
-            dm.Jz(5 + 5, j) = -I * sin(2 * Const::PI * f * t);
-            dm.Jz(20 - 5, j) = I * sin(2 * Const::PI * f * t);
-            dm.Jz(i, 5 + 5) = -I * cos(2 * Const::PI * f * t);
-            dm.Jz(i, 20 - 5) = I * cos(2 * Const::PI * f * t);
-        }
-    }
+//#pragma omp parallel for collapse(2)
+//    for (int i = 6 + 5; i < 20 - 5; i++) {
+//        for (int j = 6 + 5; j < 20 - 5; j++) {
+//            dm.Jz(5 + 5, j) = -I * sin(2 * Const::PI * f * t);
+//            dm.Jz(20 - 5, j) = I * sin(2 * Const::PI * f * t);
+//            dm.Jz(i, 5 + 5) = -I * cos(2 * Const::PI * f * t);
+//            dm.Jz(i, 20 - 5) = I * cos(2 * Const::PI * f * t);
+//        }
+//    }
+
     //    for (int i = 6; i < 20; i++) {
     //        for (int j = 6; j < 20; j++) {
     //            dm.Jz(5, j) = -I * sin(2 * Const::PI * f * t);
@@ -692,5 +695,50 @@ void Solver::UpdateSource(Domain &dm, double I, double f, double t) {
     //            dm.Jz(i, 20) = I * cos(2 * Const::PI * f * t);
     //        }
     //    }
+
+    // +sin
+    dm.Jz(10, 15) = I * sin(2 * Const::PI * f * t);
+    dm.Jz(11, 15) = I * sin(2 * Const::PI * f * t);
+    dm.Jz(10, 16) = I * sin(2 * Const::PI * f * t);
+    dm.Jz(11, 16) = I * sin(2 * Const::PI * f * t);
+
+    dm.Jz(14, 15) = I * sin(2 * Const::PI * f * t);
+    dm.Jz(15, 15) = I * sin(2 * Const::PI * f * t);
+    dm.Jz(14, 16) = I * sin(2 * Const::PI * f * t);
+    dm.Jz(15, 16) = I * sin(2 * Const::PI * f * t);
+
+    // -sin
+    dm.Jz(10, 10) = -I * sin(2 * Const::PI * f * t);
+    dm.Jz(11, 10) = -I * sin(2 * Const::PI * f * t);
+    dm.Jz(10, 9) = -I * sin(2 * Const::PI * f * t);
+    dm.Jz(11, 9) = -I * sin(2 * Const::PI * f * t);
+
+    dm.Jz(14, 10) = -I * sin(2 * Const::PI * f * t);
+    dm.Jz(15, 10) = -I * sin(2 * Const::PI * f * t);
+    dm.Jz(14, 9) = -I * sin(2 * Const::PI * f * t);
+    dm.Jz(15, 9) = -I * sin(2 * Const::PI * f * t);
+
+    // +cos
+    dm.Jz(9, 15) = I * cos(2 * Const::PI * f * t);
+    dm.Jz(10, 15) = I * cos(2 * Const::PI * f * t);
+    dm.Jz(9, 14) = I * cos(2 * Const::PI * f * t);
+    dm.Jz(10, 14) = I * cos(2 * Const::PI * f * t);
+
+    dm.Jz(9, 11) = I * cos(2 * Const::PI * f * t);
+    dm.Jz(10, 11) = I * cos(2 * Const::PI * f * t);
+    dm.Jz(9, 10) = I * cos(2 * Const::PI * f * t);
+    dm.Jz(10, 10) = I * cos(2 * Const::PI * f * t);
+
+    // -cos
+    dm.Jz(15, 15) = -I * cos(2 * Const::PI * f * t);
+    dm.Jz(16, 15) = -I * cos(2 * Const::PI * f * t);
+    dm.Jz(15, 14) = -I * cos(2 * Const::PI * f * t);
+    dm.Jz(16, 14) = -I * cos(2 * Const::PI * f * t);
+
+    dm.Jz(15, 11) = -I * cos(2 * Const::PI * f * t);
+    dm.Jz(16, 11) = -I * cos(2 * Const::PI * f * t);
+    dm.Jz(15, 10) = -I * cos(2 * Const::PI * f * t);
+    dm.Jz(16, 10) = -I * cos(2 * Const::PI * f * t);
+
     spdlog::debug("source ok");
 }
