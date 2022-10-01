@@ -32,7 +32,9 @@ int main(int argc, char *argv[]) {
     while (dm.advanceTime()) {
         Output::ProgressBar(dm.ts, step);
         solver.UpdateBoundary(dm, I, f);
-        if (dm.ts % 1000 == 0) Output::fields(dm);
+        if (dm.ts % 1000 == 0) {
+            Output::fields(dm);
+        }
     }
     std::cout << "\nCalculation complete" << std::endl;
 

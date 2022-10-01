@@ -9,6 +9,8 @@
 
 using vector = Eigen::ArrayXd;
 using matrix = Eigen::ArrayXXd;
+// using vector = Eigen::VectorXd;
+// using matrix = Eigen::MatrixXd;
 using Eigen::last;
 using Eigen::seq;
 
