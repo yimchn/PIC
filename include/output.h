@@ -8,11 +8,14 @@
 #include "species.h"
 
 namespace Output {
-void fields(Domain &domain, std::vector<Species> &species);
-void fields(Domain &domain);
-void fields(Domain &domain, int step);
-void screenOutput(Domain &domain, std::vector<Species> &species);
-void diagOutput(Domain &domain, std::vector<Species> &species);
-void Display(Domain &domain, Field<Vec3d> field);
+void fields(Domain &dm, std::vector<Species> &species);
+void fields(Domain &dm);
+void fields(Domain &dm, int step);
+void B(Domain &dm);
+void E(Domain &dm);
+void J(Domain &dm);
+void screenOutput(Domain &dm, std::vector<Species> &species);
+void diagOutput(Domain &dm, std::vector<Species> &species);
+void Display(Domain &dm, Field<Vec3d> field);
 void ProgressBar(double cur, double total);
 }  // namespace Output

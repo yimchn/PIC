@@ -77,11 +77,11 @@
 //     out << "</VTKFile>\n";
 //     out.close();
 // }
-// void Output::fields(Domain &dm, std::vector<Species> &species) {
-void Output::fields(Domain &domain) {
+
+void Output::fields(Domain &dm) {
     std::stringstream name;
     name << "../results/fields_" << std::setfill('0') << std::setw(10)
-         << domain.getTs() << ".dat";
+         << dm.getTs() << ".dat";
 
     /*open output file*/
     std::ofstream out(name.str());
@@ -94,25 +94,23 @@ void Output::fields(Domain &domain) {
     out << "VARIABLES = \"X\", "
            "\"Y\",\"Hx\",\"Hy\",\"Hz\",\"Ex\",\"Ey\",\"Ez\",\"Jx\",\"Jy\","
            "\"Jz\"\n";
-    out << "ZONE i=" << domain.geo.ni << " j=" << domain.geo.nj
-        << " SOLUTIONTIME=" << domain.time << "\n";
-    for (int i = 0; i < domain.geo.ni; i++) {
-        for (int j = 0; j < domain.geo.nj; j++) {
+    out << "ZONE i=" << dm.geo.ni << " j=" << dm.geo.nj
+        << " SOLUTIONTIME=" << dm.time << "\n";
+    for (int i = 0; i < dm.geo.ni; i++) {
+        for (int j = 0; j < dm.geo.nj; j++) {
             out << i << " ";
             out << j << " ";
-            out << domain.Hx(i, j) << " ";
-            out << domain.Hy(i, j) << " ";
-            out << domain.Hz(i, j) << " ";
-            out << domain.Dx(i, j) << " ";
-            out << domain.Dy(i, j) << " ";
-            out << domain.Dz(i, j) << " ";
-            out << domain.Jx(i, j) << " ";
-            out << domain.Jy(i, j) << " ";
-            out << domain.Jz(i, j) << "\n";
+            out << dm.Hx(i, j) << " ";
+            out << dm.Hy(i, j) << " ";
+            out << dm.Hz(i, j) << " ";
+            out << dm.Dx(i, j) << " ";
+            out << dm.Dy(i, j) << " ";
+            out << dm.Dz(i, j) << " ";
+            out << dm.Jx(i, j) << " ";
+            out << dm.Jy(i, j) << " ";
+            out << dm.Jz(i, j) << "\n";
         }
     }
-
-    out << domain.Dz;
 
     out.close();
 }
@@ -215,4 +213,98 @@ void Output::Display(Domain &domain, Field<Vec3d> field) {
         }
     }
     std::cout << "----------------------------------------------\n";
+}
+
+void Output::B(Domain &dm) {
+    std::stringstream name;
+    name << "../results/B/B_" << std::setfill('0') << std::setw(10)
+         << dm.getTs() << ".dat";
+
+    /*open output file*/
+    std::ofstream out(name.str());
+    if (!out.is_open()) {
+        std::cerr << "Could not open " << name.str() << std::endl;
+        return;
+    }
+
+    // out << "TITLE = Magnetic Field for FDTD 2d case\n";
+    // out << "VARIABLES = \"X\", "
+    //        "\"Y\",\"Bx\",\"By\",\"Bz\",\"B\"\n";
+    // out << "ZONE i=" << dm.geo.ni << " j=" << dm.geo.nj
+    //     << " SOLUTIONTIME=" << dm.time << "\n";
+    // for (int i = 0; i < dm.geo.ni; i++) {
+    //     for (int j = 0; j < dm.geo.nj; j++) {
+    //         out << i << " ";
+    //         out << j << " ";
+    //         out << dm.Hx(i, j) << " ";
+    //         out << dm.Hy(i, j) << " ";
+    //         out << dm.Hz(i, j) << " ";
+    //         out << sqrt(pow(dm.Hx(i, j), 2) + pow(dm.Hy(i, j), 2)) << "\n";
+    //     }
+    // }
+    out << dm.Hy << "\n";
+
+    out.close();
+}
+
+void Output::E(Domain &dm) {
+    std::stringstream name;
+    name << "../results/E/E_" << std::setfill('0') << std::setw(10)
+         << dm.getTs() << ".dat";
+
+    /*open output file*/
+    std::ofstream out(name.str());
+    if (!out.is_open()) {
+        std::cerr << "Could not open " << name.str() << std::endl;
+        return;
+    }
+
+    out << "TITLE = Electric Field for FDTD 2d case\n";
+    out << "VARIABLES = \"X\", "
+           "\"Y\",\"Ex\",\"Ey\",\"Ez\",\"E\"\n";
+    out << "ZONE i=" << dm.geo.ni << " j=" << dm.geo.nj
+        << " SOLUTIONTIME=" << dm.time << "\n";
+    for (int i = 0; i < dm.geo.ni; i++) {
+        for (int j = 0; j < dm.geo.nj; j++) {
+            out << i << " ";
+            out << j << " ";
+            out << dm.Ex(i, j) << " ";
+            out << dm.Ey(i, j) << " ";
+            out << dm.Ez(i, j) << " ";
+            out << sqrt(pow(dm.Ex(i, j), 2) + pow(dm.Ey(i, j), 2)) << "\n";
+        }
+    }
+
+    out.close();
+}
+
+void Output::J(Domain &dm) {
+    std::stringstream name;
+    name << "../results/J/J_" << std::setfill('0') << std::setw(10)
+         << dm.getTs() << ".dat";
+
+    /*open output file*/
+    std::ofstream out(name.str());
+    if (!out.is_open()) {
+        std::cerr << "Could not open " << name.str() << std::endl;
+        return;
+    }
+
+    out << "TITLE = Current density for FDTD 2d case\n";
+    out << "VARIABLES = \"X\", "
+           "\"Y\",\"Jx\",\"Jy\",\"Jz\",\"J\"\n";
+    out << "ZONE i=" << dm.geo.ni << " j=" << dm.geo.nj
+        << " SOLUTIONTIME=" << dm.time << "\n";
+    for (int i = 0; i < dm.geo.ni; i++) {
+        for (int j = 0; j < dm.geo.nj; j++) {
+            out << i << " ";
+            out << j << " ";
+            out << dm.Jx(i, j) << " ";
+            out << dm.Jy(i, j) << " ";
+            out << dm.Jz(i, j) << " ";
+            out << sqrt(pow(dm.Jx(i, j), 2) + pow(dm.Jy(i, j), 2)) << "\n";
+        }
+    }
+
+    out.close();
 }

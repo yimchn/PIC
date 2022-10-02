@@ -9,10 +9,6 @@
 
 using vector = Eigen::ArrayXd;
 using matrix = Eigen::ArrayXXd;
-// using vector = Eigen::VectorXd;
-// using matrix = Eigen::MatrixXd;
-using Eigen::last;
-using Eigen::seq;
 
 struct Solver {
     Domain &dm;
@@ -244,8 +240,8 @@ struct Solver {
     void CalculFdtdCoeff(Domain &domain);
     // update the magnetic and electric field under 2d using FDTD method
     void UpdateBoundary(Domain &domain, double I, double f);
-    matrix& UpdateSource(Domain &dm, double I, double f, double t);
-    matrix& UpdateDz(Domain &dm);
-    matrix& UpdateBx(Domain &dm);
-    matrix& UpdateBy(Domain &dm);
+    matrix &UpdateSource(Domain &dm, double I, double f, double t);
+    matrix &UpdateDz(Domain &dm);
+    matrix &UpdateBx(Domain &dm);
+    matrix &UpdateBy(Domain &dm);
 };

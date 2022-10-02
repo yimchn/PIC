@@ -30,12 +30,16 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Calculating..." << std::endl;
     while (dm.advanceTime()) {
-        Output::ProgressBar(dm.ts, step);
-        solver.UpdateBoundary(dm, I, f);
         if (dm.ts % 1000 == 0) {
-            Output::fields(dm);
+            Output::ProgressBar(dm.ts, step);
         }
-        // Output::fields(dm);
+
+        solver.UpdateBoundary(dm, I, f);
+
+        // if (dm.ts % 10000 == 0) {
+        //     // Output::fields(dm);
+        // }
+        Output::B(dm);
     }
     std::cout << "\nCalculation complete" << std::endl;
 
