@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::info);
 
     double f = 3e5;  // frenquency, Hz
-    double I = 100;
+    double I = 1600;
 
     Geometry geo;
     // Geometry geo(52, 52, 12, 12, 12, 12);
@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
         if (dm.ts % 1000 == 0) {
             Output::fields(dm);
         }
+        // Output::fields(dm);
     }
     std::cout << "\nCalculation complete" << std::endl;
 

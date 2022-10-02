@@ -102,9 +102,6 @@ void Output::fields(Domain &domain) {
             out << j << " ";
             out << domain.Hx(i, j) << " ";
             out << domain.Hy(i, j) << " ";
-            //            out << sqrt(pow(domain.Hx(i, j), 2) + pow(domain.Hy(i,
-            //            j), 2))
-            //                << " ";
             out << domain.Hz(i, j) << " ";
             out << domain.Dx(i, j) << " ";
             out << domain.Dy(i, j) << " ";
@@ -115,7 +112,24 @@ void Output::fields(Domain &domain) {
         }
     }
 
-    // out << dm.E;
+    out << domain.Dz;
+
+    out.close();
+}
+
+void Output::fields(Domain &domain, int step) {
+    std::stringstream name;
+    name << "../results/fields_" << std::setfill('0') << std::setw(10) << step
+         << ".dat";
+
+    /*open output file*/
+    std::ofstream out(name.str());
+    if (!out.is_open()) {
+        std::cerr << "Could not open " << name.str() << std::endl;
+        return;
+    }
+
+    out << domain.Dz;
 
     out.close();
 }
