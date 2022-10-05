@@ -385,10 +385,29 @@ void Solver::computeEF() {
 }
 
 void Solver::UpdateBoundary(Domain &dm, double I, double f) {
-    UpdateSource(dm, I, f, dm.getTime());
-    UpdateDz(dm);
-    UpdateBx(dm);
-    UpdateBy(dm);
+    bool flag = true;
+    // int step = 0;
+    while (flag) {
+        matrix Dz_tmp = dm.Dz;
+        matrix Hx_tmp = dm.Hx;
+        matrix Hy_tmp = dm.Hy;
+
+        UpdateSource(dm, I, f, dm.getTime());
+        UpdateDz(dm);
+        UpdateBx(dm);
+        UpdateBy(dm);
+
+        // ++step;
+        std::cout << Dz_tmp(15, 15) << "  " << dm.Dz(15, 15) << std::endl;
+
+        if (dm.Dz.isApprox(Dz_tmp, 1e-6) && dm.Hx.isApprox(Hx_tmp, 1e-6) &&
+            dm.Hy.isApprox(Hy_tmp, 1e-6))
+            flag = false;
+    }
+    // UpdateSource(dm, I, f, dm.getTime());
+    // UpdateDz(dm);
+    // UpdateBx(dm);
+    // UpdateBy(dm);
 }
 
 matrix &Solver::UpdateBy(Domain &dm) {
@@ -565,70 +584,36 @@ matrix &Solver::UpdateDz(Domain &dm) {
 }
 
 matrix &Solver::UpdateSource(Domain &dm, double I, double f, double t) {
-    // #pragma omp parallel for collapse(2)
-    //     for (int i = 6 + 5; i < 20 - 5; i++) {
-    //         for (int j = 6 + 5; j < 20 - 5; j++) {
-    //             dm.Jz(5 + 5, j) = -I * sin(2 * Const::PI * f * t);
-    //             dm.Jz(20 - 5, j) = I * sin(2 * Const::PI * f * t);
-    //             dm.Jz(i, 5 + 5) = -I * cos(2 * Const::PI * f * t);C_By_dxp
-    //             dm.Jz(i, 20 - 5) = I * cos(2 * Const::PI * f * t);
-    //         }
-    //     }
-
-    //    for (int i = 6; i < 20; i++) {
-    //        for (int j = 6; j < 20; j++) {
-    //            dm.Jz(5, j) = -I * sin(2 * Const::PI * f * t);
-    //            dm.Jz(20, j) = I * sin(2 * Const::PI * f * t);
-    //            dm.Jz(i, 5) = -I * cos(2 * Const::PI * f * t);
-    //            dm.Jz(i, 20) = I * cos(2 * Const::PI * f * t);
-    //        }
-    //    }
     double sin_current = I * sin(2 * Const::PI * f * t);
     double cos_current = I * cos(2 * Const::PI * f * t);
 
-    // +sin
-    dm.Jz(10, 15) = sin_current;
-    dm.Jz(11, 15) = sin_current;
-    dm.Jz(10, 16) = sin_current;
-    dm.Jz(11, 16) = sin_current;
+    double cen = static_cast<int>(((dm.geo.ni + 1) / 2) - 1);
 
-    dm.Jz(14, 15) = sin_current;
-    dm.Jz(15, 15) = sin_current;
-    dm.Jz(14, 16) = sin_current;
-    dm.Jz(15, 16) = sin_current;
+    auto sr1 = Eigen::seq(cen + 23, cen + 25);
+    auto sr2 = Eigen::seq(cen - 25, cen - 23);
+    auto sc1 = Eigen::seq(cen + 18, cen + 20);
+    auto sc2 = Eigen::seq(cen - 20, cen - 18);
+
+    auto cr1 = Eigen::seq(cen + 18, cen + 20);
+    auto cr2 = Eigen::seq(cen - 20, cen - 18);
+    auto cc1 = Eigen::seq(cen + 23, cen + 25);
+    auto cc2 = Eigen::seq(cen - 25, cen - 23);
+
+    // +sin
+    dm.Jz(sr1, sc1) = sin_current;
+    dm.Jz(sr1, sc2) = sin_current;
 
     // -sin
-    dm.Jz(10, 10) = -sin_current;
-    dm.Jz(11, 10) = -sin_current;
-    dm.Jz(10, 9) = -sin_current;
-    dm.Jz(11, 9) = -sin_current;
-
-    dm.Jz(14, 10) = -sin_current;
-    dm.Jz(15, 10) = -sin_current;
-    dm.Jz(14, 9) = -sin_current;
-    dm.Jz(15, 9) = -sin_current;
+    dm.Jz(sr2, sc1) = -sin_current;
+    dm.Jz(sr2, sc2) = -sin_current;
 
     // +cos
-    dm.Jz(9, 15) = cos_current;
-    dm.Jz(10, 15) = cos_current;
-    dm.Jz(9, 14) = cos_current;
-    dm.Jz(10, 14) = cos_current;
-
-    dm.Jz(9, 11) = cos_current;
-    dm.Jz(10, 11) = cos_current;
-    dm.Jz(9, 10) = cos_current;
-    dm.Jz(10, 10) = cos_current;
+    dm.Jz(cr1, cc2) = cos_current;
+    dm.Jz(cr2, cc2) = cos_current;
 
     // -cos
-    dm.Jz(15, 15) = -cos_current;
-    dm.Jz(16, 15) = -cos_current;
-    dm.Jz(15, 14) = -cos_current;
-    dm.Jz(16, 14) = -cos_current;
-
-    dm.Jz(15, 11) = -cos_current;
-    dm.Jz(16, 11) = -cos_current;
-    dm.Jz(15, 10) = -cos_current;
-    dm.Jz(16, 10) = -cos_current;
+    dm.Jz(cr1, cc1) = -cos_current;
+    dm.Jz(cr2, cc1) = -cos_current;
 
     spdlog::debug("source ok");
 

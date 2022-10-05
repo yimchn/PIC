@@ -8,76 +8,6 @@
 #include "domain.h"
 #include "species.h"
 
-#define GET_VARIABLE_NAME(Variable) (#Variable)
-
-/*saves fields in VTK format*/
-// void Output::fields(Domain &dm, std::vector<Species> &species) {
-//     std::stringstream name;
-//     name << "../results/fields_" << std::setfill('0') << std::setw(5)
-//          << dm.getTs() << ".vti";
-
-//     /*open output file*/
-//     std::ofstream out(name.str());
-//     if (!out.is_open()) {
-//         std::cerr << "Could not open " << name.str() << std::endl;
-//         return;
-//     }
-
-//     /*ImageData is vtk format for structured Cartesian meshes*/
-//     out << "<VTKFile type=\"ImageData\">\n";
-//     Vec2d x0 = dm.getX0();
-//     Vec2d dh = dm.getDh();
-//     out << "<ImageData Origin=\"" << x0[0] << " " << x0[1] << "\" ";
-//     out << "Spacing=\"" << dh[0] << " " << dh[1] << "\" ";
-//     out << "WholeExtent=\"0 " << dm.ni - 1 << " 0 " << dm.nj - 1
-//         << "\">\n";
-
-//     /*output data stored on nodes (point data)*/
-//     out << "<PointData>\n";
-
-//     /*node volumes, scalar*/
-//     out << "<DataArray Name=\"NodeVol\" NumberOfComponents=\"1\" "
-//            "format=\"ascii\" type=\"Float64\">\n";
-//     out << dm.node_area;
-//     out << "</DataArray>\n";
-
-//     /*potential, scalar*/
-//     out << "<DataArray Name=\"phi\" NumberOfComponents=\"1\" format=\"ascii\"
-//     "
-//            "type=\"Float64\">\n";
-//     out << dm.phi;
-//     out << "</DataArray>\n";
-
-//     /*charge density, scalar*/
-//     out << "<DataArray Name=\"rho\" NumberOfComponents=\"1\" format=\"ascii\"
-//     "
-//            "type=\"Float64\">\n";
-//     out << dm.rho;
-//     out << "</DataArray>\n";
-
-//     /*species number densities*/
-//     for (Species &sp : species) {
-//         out << "<DataArray Name=\"nd." << sp.name
-//             << "\" NumberOfComponents=\"1\" format=\"ascii\" "
-//                "type=\"Float64\">\n";
-//         out << sp.den;
-//         out << "</DataArray>\n";
-//     }
-
-//     /*electric field, 3 component vector*/
-//     out << "<DataArray Name=\"ef\" NumberOfComponents=\"2\" format=\"ascii\"
-//     "
-//            "type=\"Float64\">\n";
-//     out << dm.E;
-//     out << "</DataArray>\n";
-
-//     /*close out tags*/
-//     out << "</PointData>\n";
-//     out << "</ImageData>\n";
-//     out << "</VTKFile>\n";
-//     out.close();
-// }
-
 void Output::fields(Domain &dm) {
     std::stringstream name;
     name << "../results/fields_" << std::setfill('0') << std::setw(10)
@@ -132,8 +62,9 @@ void Output::fields(Domain &domain, int step) {
     out.close();
 }
 
-void Output::ProgressBar(double cur, double total) {
-    double progress = static_cast<double>(cur) / static_cast<double>(total);
+void Output::ProgressBar(Domain dm) {
+    double progress =
+        static_cast<double>(dm.ts) / static_cast<double>(dm.num_ts);
     int bar_width = 70;
 
     std::cout << "[";
@@ -227,22 +158,20 @@ void Output::B(Domain &dm) {
         return;
     }
 
-    // out << "TITLE = Magnetic Field for FDTD 2d case\n";
-    // out << "VARIABLES = \"X\", "
-    //        "\"Y\",\"Bx\",\"By\",\"Bz\",\"B\"\n";
-    // out << "ZONE i=" << dm.geo.ni << " j=" << dm.geo.nj
-    //     << " SOLUTIONTIME=" << dm.time << "\n";
-    // for (int i = 0; i < dm.geo.ni; i++) {
-    //     for (int j = 0; j < dm.geo.nj; j++) {
-    //         out << i << " ";
-    //         out << j << " ";
-    //         out << dm.Hx(i, j) << " ";
-    //         out << dm.Hy(i, j) << " ";
-    //         out << dm.Hz(i, j) << " ";
-    //         out << sqrt(pow(dm.Hx(i, j), 2) + pow(dm.Hy(i, j), 2)) << "\n";
-    //     }
-    // }
-    out << dm.Hy << "\n";
+    out << "TITLE = Magnetic Field for FDTD 2d case\n";
+    out << "VARIABLES = \"X\", "
+           "\"Y\",\"Bx\",\"By\",\"Bz\",\"B\"\n";
+    out << " SOLUTIONTIME=" << dm.time << "\n";
+    for (int i = 0; i < dm.geo.ni; i++) {
+        for (int j = 0; j < dm.geo.nj; j++) {
+            out << i << " ";
+            out << j << " ";
+            out << dm.Hx(i, j) << " ";
+            out << dm.Hy(i, j) << " ";
+            out << dm.Hz(i, j) << " ";
+            out << sqrt(pow(dm.Hx(i, j), 2) + pow(dm.Hy(i, j), 2)) << "\n";
+        }
+    }
 
     out.close();
 }
@@ -268,10 +197,10 @@ void Output::E(Domain &dm) {
         for (int j = 0; j < dm.geo.nj; j++) {
             out << i << " ";
             out << j << " ";
-            out << dm.Ex(i, j) << " ";
-            out << dm.Ey(i, j) << " ";
-            out << dm.Ez(i, j) << " ";
-            out << sqrt(pow(dm.Ex(i, j), 2) + pow(dm.Ey(i, j), 2)) << "\n";
+            out << dm.Dx(i, j) << " ";
+            out << dm.Dy(i, j) << " ";
+            out << dm.Dz(i, j) << " ";
+            out << sqrt(pow(dm.Dx(i, j), 2) + pow(dm.Dy(i, j), 2)) << "\n";
         }
     }
 

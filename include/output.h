@@ -17,5 +17,5 @@ void J(Domain &dm);
 void screenOutput(Domain &dm, std::vector<Species> &species);
 void diagOutput(Domain &dm, std::vector<Species> &species);
 void Display(Domain &dm, Field<Vec3d> field);
-void ProgressBar(double cur, double total);
+void ProgressBar(Domain dm);
 }  // namespace Output

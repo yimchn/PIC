@@ -7,7 +7,8 @@
 #include "output.h"
 #include "solver.h"
 
-using namespace std;
+using std::cout;
+using std::endl;
 
 int main(int argc, char *argv[]) {
     // spdlog::set_level(spdlog::level::debug);
@@ -16,31 +17,37 @@ int main(int argc, char *argv[]) {
     double f = 3e5;  // frenquency, Hz
     double I = 1600;
 
-    Geometry geo;
-    // Geometry geo(52, 52, 12, 12, 12, 12);
-    geo.SetExtents({-0.01, -0.01}, {0.01, 0.01});
+    // Geometry geo;
+    Geometry geo(101, 101, 10, 10, 10, 10);
+    geo.SetExtents({-0.5, -0.5}, {0.5, 0.5});
 
     double dt = geo.dh[0] / (Const::C * sqrt(2));
     int step = static_cast<int>(1 / (f * dt));
 
+    cout << dt << endl;
+    cout << step << endl;
+
     Domain dm(geo);
-    dm.setTime(dt, step);
+    dm.setTime(dt, 2 * step);
 
     Solver solver(dm, 10000, 1e-4);
 
     std::cout << "Calculating..." << std::endl;
-    while (dm.advanceTime()) {
-        if (dm.ts % 1000 == 0) {
-            Output::ProgressBar(dm.ts, step);
-        }
+    solver.UpdateBoundary(dm, I, f);
+    // while (dm.ts < 200) {
+    //     solver.UpdateBoundary(dm, I, f);
+    //     Output::fields(dm);
+    //     ++dm.ts;
+    // }
+    // while (dm.advanceTime()) {
+    //     // Output::ProgressBar(dm);
 
-        solver.UpdateBoundary(dm, I, f);
+    //     solver.UpdateBoundary(dm, I, f);
 
-        // if (dm.ts % 10000 == 0) {
-        //     // Output::fields(dm);
-        // }
-        Output::B(dm);
-    }
+    //     if (dm.ts % 1000 == 0) {
+    //         Output::fields(dm);
+    //     }
+    // }
     std::cout << "\nCalculation complete" << std::endl;
 
     return 0;
