@@ -1,6 +1,8 @@
 .cache/
 .idea/
+.vs/
 build/
 results/*.dat
 cmake-build-debug/
 cmake-build-release/
+out/

@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     geo.SetExtents({-0.5, -0.5}, {0.5, 0.5});
 
     double dt = geo.dh[0] / (Const::C * sqrt(2));
-    int step = static_cast<int>(1 / (f * dt));
+    int step = 10 * static_cast<int>(1 / (f * dt));
 
     cout << dt << endl;
     cout << step << endl;
@@ -34,20 +34,20 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Calculating..." << std::endl;
     // solver.UpdateBoundary(dm, I, f);
-    while (dm.ts < 2000) {
+    // while (dm.ts < 2000) {
+    //    solver.UpdateBoundary(dm, I, f);
+    //    Output::E(dm);
+    //    ++dm.ts;
+    //}
+    while (dm.advanceTime()) {
+        Output::ProgressBar(dm);
+
         solver.UpdateBoundary(dm, I, f);
-        Output::E(dm);
-        ++dm.ts;
+
+        if (dm.ts % 1000 == 0) {
+            Output::fields(dm);
+        }
     }
-    // while (dm.advanceTime()) {
-    //     Output::ProgressBar(dm);
-
-    //     solver.UpdateBoundary(dm, I, f);
-
-    //     if (dm.ts % 1000 == 0) {
-    //         Output::fields(dm);
-    //     }
-    // }
     std::cout << "\nCalculation complete" << std::endl;
 
     return 0;
