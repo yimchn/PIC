@@ -33,14 +33,14 @@ int main(int argc, char *argv[]) {
     Solver solver(dm, 10000, 1e-4);
 
     std::cout << "Calculating..." << std::endl;
-    solver.UpdateBoundary(dm, I, f);
-    // while (dm.ts < 200) {
-    //     solver.UpdateBoundary(dm, I, f);
-    //     Output::fields(dm);
-    //     ++dm.ts;
-    // }
+    // solver.UpdateBoundary(dm, I, f);
+    while (dm.ts < 2000) {
+        solver.UpdateBoundary(dm, I, f);
+        Output::E(dm);
+        ++dm.ts;
+    }
     // while (dm.advanceTime()) {
-    //     // Output::ProgressBar(dm);
+    //     Output::ProgressBar(dm);
 
     //     solver.UpdateBoundary(dm, I, f);
 

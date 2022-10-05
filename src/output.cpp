@@ -148,7 +148,7 @@ void Output::Display(Domain &domain, Field<Vec3d> field) {
 
 void Output::B(Domain &dm) {
     std::stringstream name;
-    name << "../results/B/B_" << std::setfill('0') << std::setw(10)
+    name << "../results/B_" << std::setfill('0') << std::setw(10)
          << dm.getTs() << ".dat";
 
     /*open output file*/
@@ -158,27 +158,28 @@ void Output::B(Domain &dm) {
         return;
     }
 
-    out << "TITLE = Magnetic Field for FDTD 2d case\n";
-    out << "VARIABLES = \"X\", "
-           "\"Y\",\"Bx\",\"By\",\"Bz\",\"B\"\n";
-    out << " SOLUTIONTIME=" << dm.time << "\n";
-    for (int i = 0; i < dm.geo.ni; i++) {
-        for (int j = 0; j < dm.geo.nj; j++) {
-            out << i << " ";
-            out << j << " ";
-            out << dm.Hx(i, j) << " ";
-            out << dm.Hy(i, j) << " ";
-            out << dm.Hz(i, j) << " ";
-            out << sqrt(pow(dm.Hx(i, j), 2) + pow(dm.Hy(i, j), 2)) << "\n";
-        }
-    }
+    // out << "TITLE = Magnetic Field for FDTD 2d case\n";
+    // out << "VARIABLES = \"X\", "
+    //        "\"Y\",\"Bx\",\"By\",\"Bz\",\"B\"\n";
+    // out << " SOLUTIONTIME=" << dm.time << "\n";
+    // for (int i = 0; i < dm.geo.ni; i++) {
+    //     for (int j = 0; j < dm.geo.nj; j++) {
+    //         out << i << " ";
+    //         out << j << " ";
+    //         out << dm.Hx(i, j) << " ";
+    //         out << dm.Hy(i, j) << " ";
+    //         out << dm.Hz(i, j) << " ";
+    //         out << sqrt(pow(dm.Hx(i, j), 2) + pow(dm.Hy(i, j), 2)) << "\n";
+    //     }
+    // }
+    out<<dm.Hy;
 
     out.close();
 }
 
 void Output::E(Domain &dm) {
     std::stringstream name;
-    name << "../results/E/E_" << std::setfill('0') << std::setw(10)
+    name << "../results/E_" << std::setfill('0') << std::setw(10)
          << dm.getTs() << ".dat";
 
     /*open output file*/
@@ -188,21 +189,22 @@ void Output::E(Domain &dm) {
         return;
     }
 
-    out << "TITLE = Electric Field for FDTD 2d case\n";
-    out << "VARIABLES = \"X\", "
-           "\"Y\",\"Ex\",\"Ey\",\"Ez\",\"E\"\n";
-    out << "ZONE i=" << dm.geo.ni << " j=" << dm.geo.nj
-        << " SOLUTIONTIME=" << dm.time << "\n";
-    for (int i = 0; i < dm.geo.ni; i++) {
-        for (int j = 0; j < dm.geo.nj; j++) {
-            out << i << " ";
-            out << j << " ";
-            out << dm.Dx(i, j) << " ";
-            out << dm.Dy(i, j) << " ";
-            out << dm.Dz(i, j) << " ";
-            out << sqrt(pow(dm.Dx(i, j), 2) + pow(dm.Dy(i, j), 2)) << "\n";
-        }
-    }
+    // out << "TITLE = Electric Field for FDTD 2d case\n";
+    // out << "VARIABLES = \"X\", "
+    //        "\"Y\",\"Ex\",\"Ey\",\"Ez\",\"E\"\n";
+    // out << "ZONE i=" << dm.geo.ni << " j=" << dm.geo.nj
+    //     << " SOLUTIONTIME=" << dm.time << "\n";
+    // for (int i = 0; i < dm.geo.ni; i++) {
+    //     for (int j = 0; j < dm.geo.nj; j++) {
+    //         out << i << " ";
+    //         out << j << " ";
+    //         out << dm.Dx(i, j) << " ";
+    //         out << dm.Dy(i, j) << " ";
+    //         out << dm.Dz(i, j) << " ";
+    //         out << sqrt(pow(dm.Dx(i, j), 2) + pow(dm.Dy(i, j), 2)) << "\n";
+    //     }
+    // }
+    out<<dm.Dz;
 
     out.close();
 }

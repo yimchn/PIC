@@ -385,29 +385,25 @@ void Solver::computeEF() {
 }
 
 void Solver::UpdateBoundary(Domain &dm, double I, double f) {
-    bool flag = true;
-    // int step = 0;
-    while (flag) {
-        matrix Dz_tmp = dm.Dz;
-        matrix Hx_tmp = dm.Hx;
-        matrix Hy_tmp = dm.Hy;
+    // bool flag = true;
+    // while (flag) {
+    //     matrix Dz_tmp = dm.Dz;
+    //     matrix Hx_tmp = dm.Hx;
+    //     matrix Hy_tmp = dm.Hy;
 
-        UpdateSource(dm, I, f, dm.getTime());
-        UpdateDz(dm);
-        UpdateBx(dm);
-        UpdateBy(dm);
+    //     UpdateSource(dm, I, f, dm.getTime());
+    //     UpdateDz(dm);
+    //     UpdateBx(dm);
+    //     UpdateBy(dm);
 
-        // ++step;
-        std::cout << Dz_tmp(15, 15) << "  " << dm.Dz(15, 15) << std::endl;
-
-        if (dm.Dz.isApprox(Dz_tmp, 1e-6) && dm.Hx.isApprox(Hx_tmp, 1e-6) &&
-            dm.Hy.isApprox(Hy_tmp, 1e-6))
-            flag = false;
-    }
-    // UpdateSource(dm, I, f, dm.getTime());
-    // UpdateDz(dm);
-    // UpdateBx(dm);
-    // UpdateBy(dm);
+    //     if (dm.Dz.isApprox(Dz_tmp, 1e-6) && dm.Hx.isApprox(Hx_tmp, 1e-6) &&
+    //         dm.Hy.isApprox(Hy_tmp, 1e-6))
+    //         flag = false;
+    // }
+    UpdateSource(dm, I, f, dm.getTime());
+    UpdateDz(dm);
+    UpdateBx(dm);
+    UpdateBy(dm);
 }
 
 matrix &Solver::UpdateBy(Domain &dm) {

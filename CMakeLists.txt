@@ -18,8 +18,8 @@ aux_source_directory(${PROJECT_SOURCE_DIR}/src SRC_DIR)
 # target_link_libraries(ELF PRIVATE Eigen3::Eigen spdlog::spdlog spdlog::spdlog_header_only)
 
 # 旋转电磁场
-add_executable(EMF ${SRC_DIR} example/EMF.cpp)
-target_link_libraries(EMF PRIVATE Eigen3::Eigen spdlog::spdlog spdlog::spdlog_header_only)
+add_executable(FDTD ${SRC_DIR} example/EMF.cpp)
+target_link_libraries(FDTD PRIVATE Eigen3::Eigen spdlog::spdlog spdlog::spdlog_header_only)
 
 # 测试程序
 add_executable(TEST test/test.cpp)
