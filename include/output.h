@@ -1,10 +1,10 @@
 #pragma once
 
 #include <chrono>
-#include <cmath>
 #include <fstream>
 #include <indicators/block_progress_bar.hpp>
 #include <indicators/cursor_control.hpp>
+#include <indicators/progress_bar.hpp>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -14,31 +14,27 @@
 #include "domain.h"
 #include "species.h"
 
-template <typename T>
-class PostProcessing : public T {
-   protected:
+template <typename Mixin>
+class Output : public Mixin {
+   public:
+    Domain& dm;
+
+    Output(Domain& dm, double it, double tol);
     // void fields(Domain& dm, std::vector<Species>& species);
-    void OutputFields(Domain& dm);
-    void DiagB(Domain& dm);
-    void DiagE(Domain& dm);
-    void DiagJ(Domain& dm);
+    void OutputFields();
+    void DiagB();
+    void DiagE();
+    void DiagJ();
     void OutputDiag(Domain& dm, std::vector<Species>& species);
-    void Display(Domain dm);
+    void Launch();
 };
-// namespace Output {
-// void fields(Domain &dm, std::vector<Species> &species);
-// void fields(Domain &dm);
-// void fields(Domain &dm, int step);
-// void B(Domain &dm);
-// void E(Domain &dm);
-// void J(Domain &dm);
-// void screenOutput(Domain &dm, std::vector<Species> &species);
-// void diagOutput(Domain &dm, std::vector<Species> &species);
-// void Display(Domain &dm, Field<Vec3d> field);
-// void ProgressBar(Domain dm);
-// }  // namespace Output
-template <typename T>
-void PostProcessing<T>::OutputFields(Domain& dm) {
+
+template <typename Mixin>
+Output<Mixin>::Output(Domain& dm, double it, double tol)
+    : Mixin(dm, it, tol), dm(dm) {}
+
+template <typename Mixin>
+void Output<Mixin>::OutputFields() {
     std::stringstream name;
     name << "../results/fields_" << std::setfill('0') << std::setw(10)
          << dm.getTs() << ".dat";
@@ -75,56 +71,54 @@ void PostProcessing<T>::OutputFields(Domain& dm) {
     out.close();
 }
 
-template <typename T>
-void PostProcessing<T>::Display(Domain dm) {
-    //using namespace indicators;
-    indicators::BlockProgressBar bar{
-        option::BarWidth{80}, option::ForegroundColor{Color::white},
-        option::FontStyles{std::vector<FontStyle>{FontStyle::bold}},
-        option::MaxProgress{dm.num_ts}};
+template <typename Mixin>
+void Output<Mixin>::Launch() {
+    using namespace indicators;
 
+    // BlockProgressBar bar{
+    //     option::BarWidth{80}, option::ForegroundColor{Color::white},
+    //     option::FontStyles{std::vector<FontStyle>{FontStyle::bold}},
+    //     option::MaxProgress{dm.num_ts}};
+    ProgressBar bar{
+        option::BarWidth{80},
+        option::Start{"["},
+        option::Fill{"="},
+        option::Lead{">"},
+        option::Remainder{" "},
+        option::End{" ]"},
+        option::MaxProgress{dm.num_ts},
+        // option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
+    };
+
+    // ËøõÂ∫¶Êù°‰∏äÁöÑÊñáÂ≠ó
+    std::cout << "Calculating..."
+              << "\n";
     std::cout << "Total number of iterations: " << dm.num_ts << "\n";
-    for (size_t i = 0; i < dm.num_ts; ++i) {
-        // ÷¥––œ‡”¶µƒ≤Ÿ◊˜
-        T::Solve();
+    std::cout << "Duartaion of a time step:" << dm.dt << "\n";
 
-        // ‘⁄Ω¯∂»Ãı∫Û√Êœ‘ æµ¸¥˙Ω¯∂»
-        bar.set_option(option::PostfixText {
-            std::to_string(i) + "/" + std::to_string(dm.num_ts);
-        });
+    show_console_cursor(false);
+    while (dm.advanceTime()) {
+        Mixin::StepForward();
 
-        // ∏¸–¬Ω¯∂»Ãı
+        if (dm.ts % 1000 == 0) {
+            OutputFields();
+        }
+
+        // Âú®ËøõÂ∫¶Êù°ÊúÄÂêéÊòæÁ§∫Ëø≠‰ª£Ê¨°Êï∞
+        bar.set_option(option::PostfixText{std::to_string(dm.ts) + "/" +
+                                           std::to_string(dm.num_ts)});
+
+        // Êõ¥Êñ∞ËøõÂ∫¶Êù°
         bar.tick();
     }
 
-    bar.mark_as_completed();
-
-    indicators::show_console_cursor(true);
-
-    // double progress =
-    //	static_cast<double>(dm.ts) / static_cast<double>(dm.num_ts);
-    // int bar_width = 70;
-
-    // std::cout << "[";
-    // int pos = bar_width * progress;
-    // for (int i = 0; i < bar_width; ++i) {
-    //	if (i < pos)
-    //		std::cout << "=";
-    //	else if (i == pos)
-    //		std::cout << ">";
-    //	else
-    //		std::cout << " ";
-    // }
-    // std::cout << "] " << std::fixed << std::setprecision(2) << (progress *
-    // 100)
-    //	<< "%\r";
-    // std::cout.flush();
+    // bar.mark_as_completed();
+    // show_console_cursor(true);
 }
 
 /*save runtime diagnostics to a file*/
-template <typename T>
-void PostProcessing<T>::OutputDiag(Domain& domain,
-                                   std::vector<Species>& species) {
+template <typename Mixin>
+void Output<Mixin>::OutputDiag(Domain& domain, std::vector<Species>& species) {
     std::ofstream f_diag;
 
     // is the file open?
@@ -159,8 +153,8 @@ void PostProcessing<T>::OutputDiag(Domain& domain,
     if (domain.getTs() % 25 == 0) f_diag.flush();
 }
 
-template <typename T>
-void PostProcessing<T>::DiagB(Domain& dm) {
+template <typename Mixin>
+void Output<Mixin>::DiagB() {
     std::stringstream name;
     name << "../diag/B/B_" << std::setfill('0') << std::setw(10) << dm.getTs()
          << ".dat";
@@ -172,13 +166,13 @@ void PostProcessing<T>::DiagB(Domain& dm) {
         return;
     }
 
-    out << std::sqrt(std::pow(dm.Hx, 2) + std::pow(dm.Hy, 2));
+    out << sqrt(pow(dm.Hx, 2) + pow(dm.Hy, 2));
 
     out.close();
 }
 
-template <typename T>
-void PostProcessing<T>::DiagE(Domain& dm) {
+template <typename Mixin>
+void Output<Mixin>::DiagE() {
     std::stringstream name;
     name << "../diag/E/E_" << std::setfill('0') << std::setw(10) << dm.getTs()
          << ".dat";
@@ -195,8 +189,8 @@ void PostProcessing<T>::DiagE(Domain& dm) {
     out.close();
 }
 
-template <typename T>
-void PostProcessing<T>::DiagJ(Domain& dm) {
+template <typename Mixin>
+void Output<Mixin>::DiagJ() {
     std::stringstream name;
     name << "../diag/J/J_" << std::setfill('0') << std::setw(10) << dm.getTs()
          << ".dat";

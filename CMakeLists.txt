@@ -38,6 +38,6 @@ target_link_libraries(FDTD PRIVATE indicators::indicators)
 
 # 测试程序
 add_executable(TEST test/test.cpp)
-target_link_libraries(FDTD PRIVATE Eigen3::Eigen )
-target_link_libraries(FDTD PRIVATE spdlog::spdlog spdlog::spdlog_header_only)
-target_link_libraries(FDTD PRIVATE indicators::indicators)
+target_link_libraries(TEST PRIVATE Eigen3::Eigen )
+target_link_libraries(TEST PRIVATE spdlog::spdlog spdlog::spdlog_header_only)
+target_link_libraries(TEST PRIVATE indicators::indicators)

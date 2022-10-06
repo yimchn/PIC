@@ -1,26 +1,35 @@
-#include <Eigen/Core>
-#include <iostream>
-using namespace Eigen;
-using namespace std;
+#include <chrono>
+#include <indicators/progress_bar.hpp>
+#include <sstream>
+#include <thread>
 
-int main(int argc, char* argv[]) {
-//    ArrayXXd a(2, 2);
-//    a << 1, 2, 3, 4;
-//    ArrayXXd b(2, 2);
-//    b << 1, 2, 3, 4;
+int main() {
+  using namespace indicators;
 
-    int a = 1;
-    while (true) {
-        int b = 10;
-        a++;
-        std::cout << a << std::endl;
-        if (a == b) break;
-    }
+  std::stringstream os;
 
-//    if (a.isApprox(b))
-//        cout << "equal" << endl;
-//    else
-//        cout << "not equal" << endl;
+  ProgressBar bar{
+      option::BarWidth{50},
+      option::Start{"["},
+      option::Fill{"="},
+      option::Lead{">"},
+      option::Remainder{" "},
+      option::End{"]"},
+      option::PostfixText{"Getting started"},
+      option::ForegroundColor{indicators::Color::green},
+      option::FontStyles{std::vector<indicators::FontStyle>{indicators::FontStyle::bold}},
+      option::Stream{os}};
 
-    return 0;
+  // Update bar state
+  while (true) {
+    bar.tick();
+    if (bar.is_completed())
+      break;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  std::cout << "Stream contents:\n";
+  std::cout << os.str() << "\n";
+
+  return 0;
 }
