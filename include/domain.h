@@ -15,6 +15,9 @@ using matrix = Eigen::ArrayXXd;
 struct Domain {
     Geometry geo;
 
+    double I;
+    double f;
+
     Field<double> phi;  // potential
     Field<double> rho;  // charge density
     Field<Vec3d> E;     // electric field components
@@ -50,7 +53,7 @@ struct Domain {
         time_start;  // time at simulation start
 
     /*constructor, allocates memory*/
-    Domain(Geometry geo);
+    Domain(Geometry geo, double I, double f);
 
     /*functions for accessing time information*/
     int getTs() const;

@@ -5,8 +5,10 @@
 #include "species.h"
 
 /*constructor*/
-Domain::Domain(Geometry geo)
+Domain::Domain(Geometry geo, double I, double f)
     : geo(geo),
+      I(I),
+      f(f),
       phi(geo.ni, geo.nj),
       rho(geo.ni, geo.nj),
       E(geo.ni, geo.nj),

@@ -20,6 +20,7 @@ endif()
 
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(indicators CONFIG REQUIRED)
 
 # 添加源文件目录
 include_directories(${PROJECT_SOURCE_DIR}/include)
@@ -31,8 +32,12 @@ aux_source_directory(${PROJECT_SOURCE_DIR}/src SRC_DIR)
 
 # 旋转电磁场
 add_executable(FDTD ${SRC_DIR} example/FDTD.cpp)
-target_link_libraries(FDTD PRIVATE Eigen3::Eigen spdlog::spdlog spdlog::spdlog_header_only)
+target_link_libraries(FDTD PRIVATE Eigen3::Eigen )
+target_link_libraries(FDTD PRIVATE spdlog::spdlog spdlog::spdlog_header_only)
+target_link_libraries(FDTD PRIVATE indicators::indicators)
 
 # 测试程序
 add_executable(TEST test/test.cpp)
-target_link_libraries(TEST PRIVATE Eigen3::Eigen spdlog::spdlog spdlog::spdlog_header_only)
+target_link_libraries(FDTD PRIVATE Eigen3::Eigen )
+target_link_libraries(FDTD PRIVATE spdlog::spdlog spdlog::spdlog_header_only)
+target_link_libraries(FDTD PRIVATE indicators::indicators)

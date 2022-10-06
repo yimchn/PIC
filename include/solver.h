@@ -239,8 +239,8 @@ struct Solver {
     void InitFdtdPara(Domain &domain);
     void CalculFdtdCoeff(Domain &domain);
     // update the magnetic and electric field under 2d using FDTD method
-    void UpdateBoundary(Domain &domain, double I, double f);
-    matrix &UpdateSource(Domain &dm, double I, double f, double t);
+    void Solve(Domain &domain);
+    matrix &UpdateSource(Domain &dm);
     matrix &UpdateDz(Domain &dm);
     matrix &UpdateBx(Domain &dm);
     matrix &UpdateBy(Domain &dm);

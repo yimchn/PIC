@@ -384,7 +384,7 @@ void Solver::computeEF() {
         }
 }
 
-void Solver::UpdateBoundary(Domain &dm, double I, double f) {
+void Solver::Solve(Domain &dm) {
     // bool flag = true;
     // while (flag) {
     //     matrix Dz_tmp = dm.Dz;
@@ -579,9 +579,9 @@ matrix &Solver::UpdateDz(Domain &dm) {
     return dm.Dz;
 }
 
-matrix &Solver::UpdateSource(Domain &dm, double I, double f, double t) {
-    double sin_current = I * sin(2 * Const::PI * f * t);
-    double cos_current = I * cos(2 * Const::PI * f * t);
+matrix &Solver::UpdateSource(Domain &dm) {
+    double sin_current = dm.I * sin(2 * Const::PI * dm.f * dm.time);
+    double cos_current = dm.I * cos(2 * Const::PI * dm.f * dm.time);
 
     double cen = static_cast<int>(((dm.geo.ni + 1) / 2) - 1);
 
