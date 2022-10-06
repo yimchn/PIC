@@ -68,6 +68,62 @@ void Output<Mixin>::OutputFields() {
         }
     }
 
+    // out << "<?xml version=\"1.0\"?>\n";
+    // out << "<VTKFile type=\"ImageData\">\n";
+    // Vec2d origin = dm.geo.x0;
+    // Vec2d delta = dm.geo.dh;
+    // out << "<ImageData WholeExtent=\"0 " << dm.geo.ni - 1 << " 0 "
+    //     << dm.geo.nj - 1 << "\"\n";
+    // out << "Origin=\"" << origin[0] << " " << origin[1] << "\" ";
+    // out << "Spacing=\"" << delta[0] << " " << delta[1] << "\">\n";
+
+    // /*output data stored on nodes (point data)*/
+    // out << "<PointData>\n";
+
+    // // // 单元面积
+    // // out << "<DataArray Name=\"NodeVol\" NumberOfComponents=\"1\" "
+    // //        "format=\"ascii\" type=\"Float64\">\n";
+    // // out << dm.geo.node_area;
+    // // out << "</DataArray>\n";
+
+    // // 电场信息
+    // out << "<DataArray Name=\"E\" NumberOfComponents=\"3\" format=\"ascii\" "
+    //        "type=\"Float64\">\n";
+    // for (int i = 0; i < dm.geo.ni; ++i) {
+    //     for (int j = 0; j < dm.geo.nj; ++j) {
+    //         out << dm.Dx(i, j) << " " << dm.Dy(i, j) << " " << dm.Dz(i, j)
+    //             << "\n";
+    //     }
+    // }
+    // out << "</DataArray>\n";
+
+    // // 磁场信息
+    // out << "<DataArray Name=\"B\" NumberOfComponents=\"3\" format=\"ascii\" "
+    //        "type=\"Float64\">\n";
+    // for (int i = 0; i < dm.geo.ni; ++i) {
+    //     for (int j = 0; j < dm.geo.nj; ++j) {
+    //         out << dm.Hx(i, j) << " " << dm.Hy(i, j) << " " << dm.Hz(i, j)
+    //             << "\n";
+    //     }
+    // }
+    // out << "</DataArray>\n";
+
+    // // 电流密度信息
+    // out << "<DataArray Name=\"J\" NumberOfComponents=\"1\" format=\"ascii\" "
+    //        "type=\"Float64\">\n";
+    // for (int i = 0; i < dm.geo.ni; ++i) {
+    //     for (int j = 0; j < dm.geo.nj; ++j) {
+    //         out << dm.Jx(i, j) << " " << dm.Jy(i, j) << " " << dm.Jz(i, j)
+    //             << "\n";
+    //     }
+    // }
+    // out << "</DataArray>\n";
+
+    // /*close out tags*/
+    // out << "</PointData>\n";
+    // out << "</ImageData>\n";
+    // out << "</VTKFile>\n";
+
     out.close();
 }
 
@@ -93,8 +149,10 @@ void Output<Mixin>::Launch() {
     // 进度条上的文字
     std::cout << "Calculating..."
               << "\n";
-    std::cout << "Frequency: " << dm.f << "\n";
-    std::cout << "Current density: " << dm.I << "\n";
+    std::cout << "Frequency: " << dm.f << " Hz"
+              << "\n";
+    std::cout << "Current density: " << dm.I << " s"
+              << "\n";
     std::cout << "Total number of iterations: " << dm.num_ts << "\n";
     std::cout << "Duartaion of a time step:" << dm.dt << "\n";
 
