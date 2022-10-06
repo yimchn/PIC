@@ -93,10 +93,13 @@ void Output<Mixin>::Launch() {
     // 进度条上的文字
     std::cout << "Calculating..."
               << "\n";
+    std::cout << "Frequency: " << dm.f << "\n";
+    std::cout << "Current density: " << dm.I << "\n";
     std::cout << "Total number of iterations: " << dm.num_ts << "\n";
     std::cout << "Duartaion of a time step:" << dm.dt << "\n";
 
-    show_console_cursor(false);
+    // show_console_cursor(false);
+
     while (dm.advanceTime()) {
         Mixin::StepForward();
 
@@ -113,6 +116,7 @@ void Output<Mixin>::Launch() {
     }
 
     // bar.mark_as_completed();
+    std::cout << "Calculate complete\n";
     // show_console_cursor(true);
 }
 
