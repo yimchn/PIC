@@ -1,14 +1,11 @@
 #include "solver.h"
 
-
-
 Solver::Solver(Domain &dm, int max_it, double tol)
     : dm(dm), max_solver_it(max_it), tolerance(tol) {
     spdlog::debug("All of the parameters have been allocated");
     InitFdtdPara();
     CalculFdtdCoeff();
 }
-
 
 void Solver::CalculFdtdCoeff() {
     CD_dt = dm.getDt();
@@ -381,27 +378,14 @@ void Solver::computeEF() {
         }
 }
 
-
 void Solver::StepForward() {
-    // bool flag = true;
-    // while (flag) {
-    //     matrix Dz_tmp = dm.Dz;
-    //     matrix Hx_tmp = dm.Hx;
-    //     matrix Hy_tmp = dm.Hy;
-
-    //     UpdateSource(dm, I, f, dm.getTime());
-    //     UpdateDz(dm);
-    //     UpdateBx(dm);
-    //     UpdateBy(dm);
-
-    //     if (dm.Dz.isApprox(Dz_tmp, 1e-6) && dm.Hx.isApprox(Hx_tmp, 1e-6) &&
-    //         dm.Hy.isApprox(Hy_tmp, 1e-6))
-    //         flag = false;
-    // }
-        UpdateSource();
-        UpdateDz();
-        UpdateBx();
-        UpdateBy();
+    UpdateSource();
+    UpdateDz();
+    CalculateEz();
+    UpdateBx();
+    UpdateBy();
+    CalculateHx();
+    CalculateHy();
 }
 
 matrix &Solver::UpdateBy() {
@@ -411,9 +395,9 @@ matrix &Solver::UpdateBy() {
     for (int i = 0; i < dm.geo.n_pml_xn - 1; ++i) {
         for (int j = 0; j < dm.geo.ni; ++j) {
             Phi_my_xn(i, j) = b_my_xn(i, j) * Phi_my_xn(i, j) +
-                              a_my_xn(i, j) * (dm.Dz(i + 1, j) - dm.Dz(i, j));
+                              a_my_xn(i, j) * (dm.Ez(i + 1, j) - dm.Ez(i, j));
 
-            dm.Hx(i, j) += C_By_dxn(i, j) * (dm.Dz(i + 1, j) - dm.Dz(i, j)) +
+            dm.By(i, j) += C_By_dxn(i, j) * (dm.Ez(i + 1, j) - dm.Ez(i, j)) +
                            CB_dt * Phi_my_xn(i, j);
         }
     }
@@ -427,10 +411,10 @@ matrix &Solver::UpdateBy() {
 
             Phi_my_xp(i, j) =
                 b_my_xp(i, j) * Phi_my_xp(i, j) +
-                a_my_xp(i, j) * (dm.Dz(tmp + 1, j) - dm.Dz(tmp, j));
+                a_my_xp(i, j) * (dm.Ez(tmp + 1, j) - dm.Ez(tmp, j));
 
-            dm.Hy(i, j) +=
-                C_By_dxp(i, j) * (dm.Dz(tmp + 1, j) - dm.Dz(tmp, j)) +
+            dm.By(i, j) +=
+                C_By_dxp(i, j) * (dm.Ez(tmp + 1, j) - dm.Ez(tmp, j)) +
                 CB_dt * Phi_my_xp(i, j);
         }
     }
@@ -440,14 +424,28 @@ matrix &Solver::UpdateBy() {
 #pragma omp parallel for collapse(2)
     for (int i = dm.geo.n_pml_xn; i < dm.geo.nj - dm.geo.n_pml_xp; ++i) {
         for (int j = 0; j < dm.geo.ni; ++j) {
-            dm.Hy(i, j) += CB_dt_dx * (dm.Dz(i + 1, j) - dm.Dz(i, j));
+            dm.By(i, j) += CB_dt_dx * (dm.Ez(i + 1, j) - dm.Ez(i, j));
         }
     }
     spdlog::debug("by x ok");
 
-    return dm.Hy;
+    return dm.By;
 }
 
+matrix &Solver::CalculateEz() {
+    dm.Ez = dm.Dz / Const::EPS_0;
+    return dm.Ez;
+}
+
+matrix &Solver::CalculateHx() {
+    dm.Hx = dm.Bx / Const::MU_0;
+    return dm.Hx;
+}
+
+matrix &Solver::CalculateHy() {
+    dm.Hy = dm.By / Const::MU_0;
+    return dm.Hy;
+}
 
 matrix &Solver::UpdateBx() {
 // Bx
@@ -456,8 +454,8 @@ matrix &Solver::UpdateBx() {
     for (int i = 0; i < dm.geo.nj; ++i) {
         for (int j = 0; j < dm.geo.n_pml_yn - 1; ++j) {
             Phi_mx_yn(i, j) = b_mx_yn(i, j) * Phi_mx_yn(i, j) +
-                              a_mx_yn(i, j) * (dm.Dz(i, j + 1) - dm.Dz(i, j));
-            dm.Hx(i, j) -= C_Bx_dyn(i, j) * (dm.Dz(i, j + 1) - dm.Dz(i, j)) +
+                              a_mx_yn(i, j) * (dm.Ez(i, j + 1) - dm.Ez(i, j));
+            dm.Bx(i, j) -= C_Bx_dyn(i, j) * (dm.Ez(i, j + 1) - dm.Ez(i, j)) +
                            CB_dt * Phi_mx_yn(i, j);
         }
     }
@@ -471,10 +469,10 @@ matrix &Solver::UpdateBx() {
 
             Phi_mx_yp(i, j) =
                 b_mx_yp(i, j) * Phi_mx_yp(i, j) +
-                a_mx_yp(i, j) * (dm.Dz(i, tmp + 1) - dm.Dz(i, tmp));
+                a_mx_yp(i, j) * (dm.Ez(i, tmp + 1) - dm.Ez(i, tmp));
 
-            dm.Hx(i, j) -=
-                C_Bx_dyp(i, j) * (dm.Dz(i, tmp + 1) - dm.Dz(i, tmp)) +
+            dm.Bx(i, j) -=
+                C_Bx_dyp(i, j) * (dm.Ez(i, tmp + 1) - dm.Ez(i, tmp)) +
                 CB_dt * Phi_mx_yp(i, j);
         }
     }
@@ -484,14 +482,13 @@ matrix &Solver::UpdateBx() {
 #pragma omp parallel for collapse(2)
     for (int i = 0; i < dm.geo.nj; ++i) {
         for (int j = dm.geo.n_pml_yn; j < dm.geo.ni - dm.geo.n_pml_yp; ++j) {
-            dm.Hx(i, j) -= CB_dt_dy * (dm.Dz(i, j + 1) - dm.Dz(i, j));
+            dm.Bx(i, j) -= CB_dt_dy * (dm.Ez(i, j + 1) - dm.Ez(i, j));
         }
     }
     spdlog::debug("bx y ok");
 
-    return dm.Hx;
+    return dm.Bx;
 }
-
 
 matrix &Solver::UpdateDz() {
 // Dz
@@ -578,7 +575,6 @@ matrix &Solver::UpdateDz() {
 
     return dm.Dz;
 }
-
 
 matrix &Solver::UpdateSource() {
     // double sin_current = 1600;

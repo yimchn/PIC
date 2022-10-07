@@ -18,7 +18,7 @@ class Output : public Mixin {
 
     Output(Domain& dm, double it, double tol);
     // void fields(Domain& dm, std::vector<Species>& species);
-    void OutputFields();
+    void OutputDat();
     void DiagB();
     void DiagE();
     void DiagJ();
@@ -31,7 +31,7 @@ Output<Mixin>::Output(Domain& dm, double it, double tol)
     : Mixin(dm, it, tol), dm(dm) {}
 
 template <typename Mixin>
-void Output<Mixin>::OutputFields() {
+void Output<Mixin>::OutputDat() {
     std::stringstream name;
     name << "../results/fields_" << std::setfill('0') << std::setw(10)
          << dm.getTs() << ".dat";
@@ -45,7 +45,7 @@ void Output<Mixin>::OutputFields() {
 
     out << "TITLE = Magnetic Field 2d\n";
     out << "VARIABLES = \"X\", "
-           "\"Y\",\"Hx\",\"Hy\",\"Hz\",\"Ex\",\"Ey\",\"Ez\",\"Jx\",\"Jy\","
+           "\"Y\",\"Bx\",\"By\",\"Bz\",\"Ex\",\"Ey\",\"Ez\",\"Jx\",\"Jy\","
            "\"Jz\"\n";
     out << "ZONE i=" << dm.geo.ni << " j=" << dm.geo.nj
         << " SOLUTIONTIME=" << dm.time << "\n";
@@ -53,12 +53,12 @@ void Output<Mixin>::OutputFields() {
         for (int j = 0; j < dm.geo.nj; j++) {
             out << i << " ";
             out << j << " ";
-            out << dm.Hx(i, j) << " ";
-            out << dm.Hy(i, j) << " ";
-            out << dm.Hz(i, j) << " ";
-            out << dm.Dx(i, j) << " ";
-            out << dm.Dy(i, j) << " ";
-            out << dm.Dz(i, j) << " ";
+            out << dm.Bx(i, j) << " ";
+            out << dm.By(i, j) << " ";
+            out << dm.Bz(i, j) << " ";
+            out << dm.Ex(i, j) << " ";
+            out << dm.Ey(i, j) << " ";
+            out << dm.Ez(i, j) << " ";
             out << dm.Jx(i, j) << " ";
             out << dm.Jy(i, j) << " ";
             out << dm.Jz(i, j) << "\n";
@@ -141,11 +141,11 @@ void Output<Mixin>::Launch() {
         Mixin::StepForward();
 
         if (dm.ts % 1000 == 0) {
-            OutputFields();
+            OutputDat();
         }
     }
 
-    std::cout << "Calculate complete\n";
+    std::cout << "\nCalculate complete\n";
 }
 
 /*save runtime diagnostics to a file*/

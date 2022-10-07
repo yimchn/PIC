@@ -246,4 +246,7 @@ struct Solver {
     matrix &UpdateDz();
     matrix &UpdateBx();
     matrix &UpdateBy();
+    matrix &CalculateEz();
+    matrix &CalculateHx();
+    matrix &CalculateHy();
 };
