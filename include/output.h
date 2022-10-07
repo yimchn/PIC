@@ -2,9 +2,6 @@
 
 #include <chrono>
 #include <fstream>
-#include <indicators/block_progress_bar.hpp>
-#include <indicators/cursor_control.hpp>
-#include <indicators/progress_bar.hpp>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -129,53 +126,26 @@ void Output<Mixin>::OutputFields() {
 
 template <typename Mixin>
 void Output<Mixin>::Launch() {
-    using namespace indicators;
-
-    // BlockProgressBar bar{
-    //     option::BarWidth{80}, option::ForegroundColor{Color::white},
-    //     option::FontStyles{std::vector<FontStyle>{FontStyle::bold}},
-    //     option::MaxProgress{dm.num_ts}};
-    ProgressBar bar{
-        option::BarWidth{80},
-        option::Start{"["},
-        option::Fill{"="},
-        option::Lead{">"},
-        option::Remainder{" "},
-        option::End{" ]"},
-        option::MaxProgress{dm.num_ts},
-        // option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
-    };
-
-    // 进度条上的文字
     std::cout << "Calculating..."
               << "\n";
-    std::cout << "Frequency: " << dm.f << " Hz"
+    std::cout << "Frequency: " << dm.f / 1000 << " [kHz]"
               << "\n";
-    std::cout << "Current density: " << dm.I << " s"
+    std::cout << "Current density: " << dm.I << " [A/m^2]"
               << "\n";
-    std::cout << "Total number of iterations: " << dm.num_ts << "\n";
-    std::cout << "Duartaion of a time step:" << dm.dt << "\n";
-
-    // show_console_cursor(false);
+    std::cout << "Duartaion of a time step: " << dm.dt << " [s]"
+              << "\n\n";
 
     while (dm.advanceTime()) {
+        std::cout << "\rCurrent step / Total step: " << dm.ts << "/"
+                  << dm.num_ts << std::flush;
         Mixin::StepForward();
 
         if (dm.ts % 1000 == 0) {
             OutputFields();
         }
-
-        // 在进度条最后显示迭代次数
-        bar.set_option(option::PostfixText{std::to_string(dm.ts) + "/" +
-                                           std::to_string(dm.num_ts)});
-
-        // 更新进度条
-        bar.tick();
     }
 
-    // bar.mark_as_completed();
     std::cout << "Calculate complete\n";
-    // show_console_cursor(true);
 }
 
 /*save runtime diagnostics to a file*/
