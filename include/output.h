@@ -1,12 +1,9 @@
 #pragma once
 
-#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <thread>
-#include <vector>
 
 #include "domain.h"
 #include "species.h"
@@ -19,6 +16,7 @@ class Output : public Mixin {
     Output(Domain& dm, double it, double tol);
     // void fields(Domain& dm, std::vector<Species>& species);
     void OutputDat();
+    void OutputVti();
     void DiagB();
     void DiagE();
     void DiagJ();
@@ -43,12 +41,12 @@ void Output<Mixin>::OutputDat() {
         return;
     }
 
-    out << "TITLE = Magnetic Field 2d\n";
+    out << "TITLE = \"Magnetic Field 2d\"\n";
     out << "VARIABLES = \"X\", "
            "\"Y\",\"Bx\",\"By\",\"Bz\",\"Ex\",\"Ey\",\"Ez\",\"Jx\",\"Jy\","
            "\"Jz\"\n";
-    out << "ZONE i=" << dm.geo.ni << " j=" << dm.geo.nj
-        << " SOLUTIONTIME=" << dm.time << "\n";
+    out << "ZONE i=" << dm.geo.ni << ",j=" << dm.geo.nj << ",f=point"
+        << ",SOLUTIONTIME=" << dm.time << "\n";
     for (int i = 0; i < dm.geo.ni; i++) {
         for (int j = 0; j < dm.geo.nj; j++) {
             out << i << " ";
@@ -65,61 +63,79 @@ void Output<Mixin>::OutputDat() {
         }
     }
 
-    // out << "<?xml version=\"1.0\"?>\n";
-    // out << "<VTKFile type=\"ImageData\">\n";
-    // Vec2d origin = dm.geo.x0;
-    // Vec2d delta = dm.geo.dh;
-    // out << "<ImageData WholeExtent=\"0 " << dm.geo.ni - 1 << " 0 "
-    //     << dm.geo.nj - 1 << "\"\n";
-    // out << "Origin=\"" << origin[0] << " " << origin[1] << "\" ";
-    // out << "Spacing=\"" << delta[0] << " " << delta[1] << "\">\n";
+    out.close();
+}
 
-    // /*output data stored on nodes (point data)*/
-    // out << "<PointData>\n";
+template <typename Mixin>
+void Output<Mixin>::OutputVti() {
+    std::stringstream name;
+    name << "../results/fields_" << std::setfill('0') << std::setw(10)
+         << dm.getTs() << ".vti";
 
-    // // // 单元面积
-    // // out << "<DataArray Name=\"NodeVol\" NumberOfComponents=\"1\" "
-    // //        "format=\"ascii\" type=\"Float64\">\n";
-    // // out << dm.geo.node_area;
-    // // out << "</DataArray>\n";
+    /*open output file*/
+    std::ofstream out(name.str());
+    if (!out.is_open()) {
+        std::cerr << "Could not open " << name.str() << std::endl;
+        return;
+    }
 
-    // // 电场信息
-    // out << "<DataArray Name=\"E\" NumberOfComponents=\"3\" format=\"ascii\" "
-    //        "type=\"Float64\">\n";
-    // for (int i = 0; i < dm.geo.ni; ++i) {
-    //     for (int j = 0; j < dm.geo.nj; ++j) {
-    //         out << dm.Dx(i, j) << " " << dm.Dy(i, j) << " " << dm.Dz(i, j)
-    //             << "\n";
-    //     }
-    // }
+    out << "<?xml version=\"1.0\"?>\n";
+    out << "<VTKFile type=\"ImageData\" version=\"0.1\" "
+           "byte_order=\"LittleEndian\">\n";
+    Vec2d origin = dm.geo.x0;
+    Vec2d delta = dm.geo.dh;
+    out << "<ImageData WholeExtent=\"0 " << dm.geo.ni - 1 << " 0 "
+        << dm.geo.nj - 1 << " 0 0"
+        << "\"\n";
+    out << "Origin=\"" << origin[0] << " " << origin[1] << " 0\" ";
+    out << "Spacing=\"" << delta[0] << " " << delta[1] << " 0\">\n";
+
+    /*output data stored on nodes (point data)*/
+    out << "<PointData>\n";
+
+    // // 单元面积
+    // out << "<DataArray Name=\"NodeVol\" NumberOfComponents=\"1\" "
+    //        "format=\"ascii\" type=\"Float64\">\n";
+    // out << dm.geo.node_area;
     // out << "</DataArray>\n";
 
-    // // 磁场信息
-    // out << "<DataArray Name=\"B\" NumberOfComponents=\"3\" format=\"ascii\" "
-    //        "type=\"Float64\">\n";
-    // for (int i = 0; i < dm.geo.ni; ++i) {
-    //     for (int j = 0; j < dm.geo.nj; ++j) {
-    //         out << dm.Hx(i, j) << " " << dm.Hy(i, j) << " " << dm.Hz(i, j)
-    //             << "\n";
-    //     }
-    // }
-    // out << "</DataArray>\n";
+    // 电场信息
+    out << "<DataArray Name=\"E\" NumberOfComponents=\"3\" format=\"ascii\" "
+           "type=\"Float64\">\n";
+    for (int i = 0; i < dm.geo.ni; ++i) {
+        for (int j = 0; j < dm.geo.nj; ++j) {
+            out << dm.Dx(i, j) << " " << dm.Dy(i, j) << " " << dm.Dz(i, j)
+                << "\n";
+        }
+    }
+    out << "</DataArray>\n";
 
-    // // 电流密度信息
-    // out << "<DataArray Name=\"J\" NumberOfComponents=\"1\" format=\"ascii\" "
-    //        "type=\"Float64\">\n";
-    // for (int i = 0; i < dm.geo.ni; ++i) {
-    //     for (int j = 0; j < dm.geo.nj; ++j) {
-    //         out << dm.Jx(i, j) << " " << dm.Jy(i, j) << " " << dm.Jz(i, j)
-    //             << "\n";
-    //     }
-    // }
-    // out << "</DataArray>\n";
+    // 磁场信息
+    out << "<DataArray Name=\"B\" NumberOfComponents=\"3\" format=\"ascii\" "
+           "type=\"Float64\">\n";
+    for (int i = 0; i < dm.geo.ni; ++i) {
+        for (int j = 0; j < dm.geo.nj; ++j) {
+            out << dm.Hx(i, j) << " " << dm.Hy(i, j) << " " << dm.Hz(i, j)
+                << "\n";
+        }
+    }
+    out << "</DataArray>\n";
 
-    // /*close out tags*/
-    // out << "</PointData>\n";
-    // out << "</ImageData>\n";
-    // out << "</VTKFile>\n";
+    // 电流密度信息
+    out << "<DataArray Name=\"J\" NumberOfComponents=\"1\" format=\"ascii\" "
+           "type=\"Float64\">\n";
+    for (int i = 0; i < dm.geo.ni; ++i) {
+        for (int j = 0; j < dm.geo.nj; ++j) {
+            out << dm.Jx(i, j) << " " << dm.Jy(i, j) << " " << dm.Jz(i, j)
+                << "\n";
+        }
+    }
+    out << "</DataArray>\n";
+
+    /*close out tags*/
+    out << "</PointData>\n";
+    out << "</ImageData>\n";
+    out << "</VTKFile>\n";
 
     out.close();
 }
@@ -140,9 +156,7 @@ void Output<Mixin>::Launch() {
                   << dm.num_ts << std::flush;
         Mixin::StepForward();
 
-        if (dm.ts % 1000 == 0) {
-            OutputDat();
-        }
+        OutputDat();
     }
 
     std::cout << "\nCalculate complete\n";
