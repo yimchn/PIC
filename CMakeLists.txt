@@ -35,6 +35,6 @@ target_link_libraries(FDTD PRIVATE Eigen3::Eigen)
 target_link_libraries(FDTD PRIVATE spdlog::spdlog spdlog::spdlog_header_only)
 
 # 测试程序
-add_executable(TEST test/test.cpp)
+add_executable(TEST test/decorator.cpp)
 target_link_libraries(TEST PRIVATE Eigen3::Eigen)
 target_link_libraries(TEST PRIVATE spdlog::spdlog spdlog::spdlog_header_only)
