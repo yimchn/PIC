@@ -11,7 +11,6 @@
 using vector = Eigen::ArrayXd;
 using matrix = Eigen::ArrayXXd;
 
-
 struct Solver {
     Domain &dm;
     unsigned max_solver_it;  // maximum number of solver iterations
@@ -123,29 +122,29 @@ struct Solver {
     vector C_Dx_dyn_v = vector::Zero(dm.geo.n_pml_yn);
     vector C_Dx_dyp_v = vector::Zero(dm.geo.n_pml_yp);
 
-    matrix Phi_ex_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix b_ex_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix a_ex_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix C_Dx_dyn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
+    matrix Phi_ex_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix b_ex_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix a_ex_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix C_Dx_dyn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
 
-    matrix Phi_ex_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
-    matrix b_ex_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
-    matrix a_ex_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
-    matrix C_Dx_dyp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yp);
+    matrix Phi_ex_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix b_ex_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix a_ex_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix C_Dx_dyp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
 
     // Dy
     vector C_Dy_dxn_v = vector::Zero(dm.geo.n_pml_xn);
     vector C_Dy_dxp_v = vector::Zero(dm.geo.n_pml_xp);
 
-    matrix Phi_ey_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix b_ey_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix a_ey_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix C_Dy_dxn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
+    matrix Phi_ey_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix b_ey_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix a_ey_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix C_Dy_dxn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
 
-    matrix Phi_ey_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix b_ey_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix a_ey_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix C_Dy_dxp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
+    matrix Phi_ey_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix b_ey_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix a_ey_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix C_Dy_dxp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
 
     // Dz
     vector C_Dz_dxn_v = vector::Zero(dm.geo.n_pml_xn);
@@ -209,25 +208,25 @@ struct Solver {
     vector C_Bz_dyn_v = vector::Zero(dm.geo.n_pml_yn);
     vector C_Bz_dyp_v = vector::Zero(dm.geo.n_pml_yp);
 
-    matrix Phi_mz_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix b_mz_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix a_mz_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
-    matrix C_Bz_dxn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.nj);
+    matrix Phi_mz_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix b_mz_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix a_mz_xn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
+    matrix C_Bz_dxn = matrix::Zero(dm.geo.n_pml_xn, dm.geo.ni);
 
-    matrix Phi_mz_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix b_mz_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix a_mz_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
-    matrix C_Bz_dxp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.nj);
+    matrix Phi_mz_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix b_mz_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix a_mz_xp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
+    matrix C_Bz_dxp = matrix::Zero(dm.geo.n_pml_xp, dm.geo.ni);
 
-    matrix Phi_mz_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix b_mz_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix a_mz_yn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
-    matrix C_Bz_dyn = matrix::Zero(dm.geo.ni, dm.geo.n_pml_yn);
+    matrix Phi_mz_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix b_mz_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix a_mz_yn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
+    matrix C_Bz_dyn = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yn);
 
-    matrix Phi_mz_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_xn);
-    matrix b_mz_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_xn);
-    matrix a_mz_yp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_xn);
-    matrix C_Bz_dyp = matrix::Zero(dm.geo.ni, dm.geo.n_pml_xn);
+    matrix Phi_mz_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix b_mz_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix a_mz_yp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
+    matrix C_Bz_dyp = matrix::Zero(dm.geo.nj, dm.geo.n_pml_yp);
 
     /*constructor, sets world*/
     Solver(Domain &domain, int max_it, double tol);
@@ -242,11 +241,27 @@ struct Solver {
     void CalculFdtdCoeff();
     // update the magnetic and electric field under 2d using FDTD method
     void StepForward();
-    matrix &UpdateSource();
-    matrix &UpdateDz();
-    matrix &UpdateBx();
-    matrix &UpdateBy();
-    matrix &CalculateEz();
-    matrix &CalculateHx();
-    matrix &CalculateHy();
+    void UpdateSource();
+
+    // 计算电场
+    void UpdateDx();
+    void UpdateDy();
+    void UpdateDz();
+
+    // 计算磁场
+    void UpdateBx();
+    void UpdateBy();
+    void UpdateBz();
+
+    // 根据物质本构关系计算E和H
+    void CalculateEx();
+    void CalculateEy();
+    void CalculateEz();
+    void CalculateHx();
+    void CalculateHy();
+    void CalculateHz();
+
+    // TMz与TEz计算模式
+    void TMz();
+    void TEz();
 };

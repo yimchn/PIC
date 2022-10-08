@@ -40,9 +40,15 @@ struct Domain {
     matrix Hy = matrix::Zero(geo.ni, geo.nj);
     matrix Hz = matrix::Zero(geo.ni, geo.nj);
 
+    // 外部激励电流源
     matrix Jx = matrix::Zero(geo.ni, geo.nj);
     matrix Jy = matrix::Zero(geo.ni, geo.nj);
     matrix Jz = matrix::Zero(geo.ni, geo.nj);
+
+    // 外部激励磁流源
+    matrix Mx = matrix::Zero(geo.ni, geo.nj);
+    matrix My = matrix::Zero(geo.ni, geo.nj);
+    matrix Mz = matrix::Zero(geo.ni, geo.nj);
 
     double dt = 0;    // time step length
     double time = 0;  // physical time

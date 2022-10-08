@@ -379,75 +379,29 @@ void Solver::computeEF() {
 }
 
 void Solver::StepForward() {
+    // 更新源
     UpdateSource();
-    UpdateDz();
-    CalculateEz();
-    UpdateBx();
-    UpdateBy();
-    CalculateHx();
-    CalculateHy();
+
+    // TMz模式计算
+    TMz();
+
+    // TEz模式计算
+    TEz();
 }
 
-matrix &Solver::UpdateBy() {
-// By
-// 负x轴方向PML
-#pragma omp parallel for collapse(2)
-    for (int i = 0; i < dm.geo.n_pml_xn - 1; ++i) {
-        for (int j = 0; j < dm.geo.ni; ++j) {
-            Phi_my_xn(i, j) = b_my_xn(i, j) * Phi_my_xn(i, j) +
-                              a_my_xn(i, j) * (dm.Ez(i + 1, j) - dm.Ez(i, j));
+void Solver::CalculateEx() { dm.Ex = dm.Dx / Const::EPS_0; }
 
-            dm.By(i, j) += C_By_dxn(i, j) * (dm.Ez(i + 1, j) - dm.Ez(i, j)) +
-                           CB_dt * Phi_my_xn(i, j);
-        }
-    }
-    spdlog::debug("by -x ok");
+void Solver::CalculateEy() { dm.Ey = dm.Dy / Const::EPS_0; }
 
-    // 正x轴方向PML
-#pragma omp parallel for collapse(2)
-    for (int i = 0; i < dm.geo.n_pml_xp - 1; ++i) {
-        for (int j = 0; j < dm.geo.ni; ++j) {
-            int tmp = dm.geo.nj - dm.geo.n_pml_xp + i;
+void Solver::CalculateEz() { dm.Ez = dm.Dz / Const::EPS_0; }
 
-            Phi_my_xp(i, j) =
-                b_my_xp(i, j) * Phi_my_xp(i, j) +
-                a_my_xp(i, j) * (dm.Ez(tmp + 1, j) - dm.Ez(tmp, j));
+void Solver::CalculateHx() { dm.Hx = dm.Bx / Const::MU_0; }
 
-            dm.By(i, j) +=
-                C_By_dxp(i, j) * (dm.Ez(tmp + 1, j) - dm.Ez(tmp, j)) +
-                CB_dt * Phi_my_xp(i, j);
-        }
-    }
-    spdlog::debug("by +x ok");
+void Solver::CalculateHy() { dm.Hy = dm.By / Const::MU_0; }
 
-    // 非PML
-#pragma omp parallel for collapse(2)
-    for (int i = dm.geo.n_pml_xn; i < dm.geo.nj - dm.geo.n_pml_xp; ++i) {
-        for (int j = 0; j < dm.geo.ni; ++j) {
-            dm.By(i, j) += CB_dt_dx * (dm.Ez(i + 1, j) - dm.Ez(i, j));
-        }
-    }
-    spdlog::debug("by x ok");
+void Solver::CalculateHz() { dm.Hz = dm.Bz / Const::MU_0; }
 
-    return dm.By;
-}
-
-matrix &Solver::CalculateEz() {
-    dm.Ez = dm.Dz / Const::EPS_0;
-    return dm.Ez;
-}
-
-matrix &Solver::CalculateHx() {
-    dm.Hx = dm.Bx / Const::MU_0;
-    return dm.Hx;
-}
-
-matrix &Solver::CalculateHy() {
-    dm.Hy = dm.By / Const::MU_0;
-    return dm.Hy;
-}
-
-matrix &Solver::UpdateBx() {
+void Solver::UpdateBx() {
 // Bx
 // -y
 #pragma omp parallel for collapse(2)
@@ -486,11 +440,199 @@ matrix &Solver::UpdateBx() {
         }
     }
     spdlog::debug("bx y ok");
-
-    return dm.Bx;
 }
 
-matrix &Solver::UpdateDz() {
+void Solver::UpdateBy() {
+// By
+// 负x轴方向PML
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.n_pml_xn - 1; ++i) {
+        for (int j = 0; j < dm.geo.ni; ++j) {
+            Phi_my_xn(i, j) = b_my_xn(i, j) * Phi_my_xn(i, j) +
+                              a_my_xn(i, j) * (dm.Ez(i + 1, j) - dm.Ez(i, j));
+
+            dm.By(i, j) += C_By_dxn(i, j) * (dm.Ez(i + 1, j) - dm.Ez(i, j)) +
+                           CB_dt * Phi_my_xn(i, j);
+        }
+    }
+    spdlog::debug("by -x ok");
+
+    // 正x轴方向PML
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.n_pml_xp - 1; ++i) {
+        for (int j = 0; j < dm.geo.ni; ++j) {
+            int tmp = dm.geo.nj - dm.geo.n_pml_xp + i;
+
+            Phi_my_xp(i, j) =
+                b_my_xp(i, j) * Phi_my_xp(i, j) +
+                a_my_xp(i, j) * (dm.Ez(tmp + 1, j) - dm.Ez(tmp, j));
+
+            dm.By(i, j) +=
+                C_By_dxp(i, j) * (dm.Ez(tmp + 1, j) - dm.Ez(tmp, j)) +
+                CB_dt * Phi_my_xp(i, j);
+        }
+    }
+
+    // 非PML
+#pragma omp parallel for collapse(2)
+    for (int i = dm.geo.n_pml_xn; i < dm.geo.nj - dm.geo.n_pml_xp; ++i) {
+        for (int j = 0; j < dm.geo.ni; ++j) {
+            dm.By(i, j) += CB_dt_dx * (dm.Ez(i + 1, j) - dm.Ez(i, j));
+        }
+    }
+}
+
+void Solver::UpdateBz() {
+// Bz更新公式中Δx部分负x轴方向(xn)PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.n_pml_xn - 1; ++i) {
+        for (int j = 0; j < dm.geo.ni; ++j) {
+            Phi_mz_xn(i, j) = b_mz_xn(i, j) * Phi_mz_xn(i, j) +
+                              a_mz_xn(i, j) * (dm.Ex(i + 1, j) - dm.Ex(i, j));
+
+            dm.Bz(i, j) += C_Bz_dxn(i, j) * (dm.Ex(i + 1, j) - dm.Hx(i, j)) +
+                           CB_dt * (Phi_mz_xn(i, j) - dm.Mz(i, j));
+        }
+    }
+
+// Bz更新公式中Δx部分正x轴方向(xp)PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.n_pml_xp - 1; ++i) {
+        for (int j = 0; j < dm.geo.ni; ++j) {
+            int tmp = dm.geo.nj - dm.geo.n_pml_xp + i;
+            Phi_mz_xp(i, j) =
+                b_mz_xp(i, j) * Phi_mz_xp(i, j) +
+                a_mz_xp(i, j) * (dm.Ex(tmp + 1, j) - dm.Ex(tmp, j));
+
+            dm.Bz(i, j) +=
+                C_Bz_dxp(i, j) * (dm.Ex(tmp + 1, j) - dm.Ex(tmp, j)) -
+                CB_dt * (Phi_mz_xp(i, j) - dm.Mz(i, j));
+        }
+    }
+
+// Bz更新公式中Δx部分非PML计算域更新
+#pragma omp parallel for collapse(2)
+    for (int i = dm.geo.n_pml_xn; i < dm.geo.nj - dm.geo.n_pml_xp; ++i) {
+        for (int j = 0; j < dm.geo.ni; ++j) {
+            dm.Bz(i, j) += CB_dt_dx * (dm.Ex(i + 1, j) - dm.Ex(i, j)) -
+                           CB_dt * dm.Mz(i, j);
+        }
+    }
+
+// Bz更新公式中Δy部分负y轴方向(yn)PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.nj; ++i) {
+        for (int j = 0; j < dm.geo.n_pml_yn - 1; ++j) {
+            Phi_mz_yn(i, j) = b_mz_yn(i, j) * Phi_mz_yn(i, j) +
+                              a_mz_yn(i, j) * (dm.Ey(i, j + 1) - dm.Ey(i, j));
+
+            dm.Bz(i, j) -= C_Bz_dyn(i, j) * (dm.Ey(i, j + 1) - dm.Ey(i, j)) +
+                           CB_dt * Phi_mz_yn(i, j);
+        }
+    }
+
+// Bz更新公式中Δy部分正y轴方向(yp)PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.nj; ++i) {
+        for (int j = 0; j < dm.geo.n_pml_yp - 1; ++j) {
+            int tmp = dm.geo.ni - dm.geo.n_pml_yp + j;
+
+            Phi_mz_yp(i, j) =
+                b_mz_yp(i, j) * Phi_mz_yp(i, j) +
+                a_mz_yp(i, j) * (dm.Ey(i, tmp + 1) - dm.Ey(i, tmp));
+
+            dm.Bz(i, j) -=
+                C_Bz_dyp(i, j) * (dm.Ey(i, tmp + 1) - dm.Ey(i, tmp)) +
+                CB_dt * Phi_mz_yp(i, j);
+        }
+    }
+
+// Bz更新公式中Δy部分非PML计算域更新
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.nj; ++i) {
+        for (int j = dm.geo.n_pml_yn; j < dm.geo.ni - dm.geo.n_pml_yp; ++j) {
+            dm.Bz(i, j) -= CB_dt_dy * (dm.Ey(i, j + 1) - dm.Ey(i, j));
+        }
+    }
+}
+
+void Solver::UpdateDx() {
+// Dx更新公式中Δy部分负y轴(yn)PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.nj; ++i) {
+        for (int j = 1; j < dm.geo.n_pml_yn; ++j) {
+            Phi_ex_yn(i, j) = b_ex_yn(i, j) * Phi_ex_yn(i, j) +
+                              a_ex_yn(i, j) * (dm.Hz(i, j) - dm.Hz(i, j - 1));
+            dm.Dx(i, j) -= C_Dx_dyn(i, j) * (dm.Hz(i, j + 1) - dm.Hz(i, j)) +
+                           CD_dt * Phi_ex_yn(i, j);
+        }
+    }
+    spdlog::debug("bx -y ok");
+
+// Dx更新公式中Δy部分负正y轴(yp)PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.nj; ++i) {
+        for (int j = 1; j < dm.geo.n_pml_yp; ++j) {
+            int tmp = dm.geo.ni - dm.geo.n_pml_yp + j;
+
+            Phi_ex_yp(i, j) =
+                b_ex_yp(i, j) * Phi_ex_yp(i, j) +
+                a_ex_yp(i, j) * (dm.Hz(i, tmp) - dm.Hz(i, tmp - 1));
+
+            dm.Dx(i, j) -=
+                C_Dx_dyp(i, j) * (dm.Hz(i, tmp) - dm.Hz(i, tmp - 1)) +
+                CD_dt * Phi_ex_yp(i, j);
+        }
+    }
+
+// Dx更新公式中Δy部分非PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < dm.geo.nj; ++i) {
+        for (int j = dm.geo.n_pml_yn; j < dm.geo.ni - dm.geo.n_pml_yp; ++j) {
+            dm.Dx(i, j) -= CD_dt_dy * (dm.Hz(i, j) - dm.Hz(i, j - 1));
+        }
+    }
+}
+
+void Solver::UpdateDy() {
+// Dy更新公式中Δx部分负x轴(xn)PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = 1; i < dm.geo.n_pml_xn; ++i) {
+        for (int j = 0; j < dm.geo.ni; ++j) {
+            Phi_ey_xn(i, j) = b_ey_xn(i, j) * Phi_ey_xn(i, j) +
+                              a_ey_xn(i, j) * (dm.Hz(i, j) - dm.Hz(i - 1, j));
+
+            dm.Dy(i, j) += C_Dy_dxn(i, j) * (dm.Hz(i, j) - dm.Hz(i - 1, j)) +
+                           CD_dt * Phi_ey_xn(i, j);
+        }
+    }
+
+// Dy更新公式中Δx部分正x轴(xp)PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = 1; i < dm.geo.n_pml_xp; ++i) {
+        for (int j = 0; j < dm.geo.ni; ++j) {
+            int tmp = dm.geo.nj - dm.geo.n_pml_xp + i;
+
+            Phi_ey_xp(i, j) =
+                b_ey_xp(i, j) * Phi_ey_xp(i, j) +
+                a_ey_xp(i, j) * (dm.Hz(tmp, j) - dm.Hz(tmp - 1, j));
+
+            dm.Dy(i, j) +=
+                C_Dy_dxp(i, j) * (dm.Hz(tmp, j) - dm.Hz(tmp - 1, j)) +
+                CD_dt * Phi_ey_xp(i, j);
+        }
+    }
+
+// Dy更新公式中Δx部分非PML更新
+#pragma omp parallel for collapse(2)
+    for (int i = dm.geo.n_pml_xn; i < dm.geo.nj - dm.geo.n_pml_xp; ++i) {
+        for (int j = 0; j < dm.geo.ni; ++j) {
+            dm.Dy(i, j) += CD_dt_dx * (dm.Hz(i, j) - dm.Hz(i - 1, j));
+        }
+    }
+}
+
+void Solver::UpdateDz() {
 // Dz
 // x
 // 负PML
@@ -504,7 +646,6 @@ matrix &Solver::UpdateDz() {
                            CD_dt * (Phi_ez_xn(i, j) - dm.Jz(i, j));
         }
     }
-    spdlog::debug("dz -x ok");
 
     // 正PML
 #pragma omp parallel for collapse(2)
@@ -520,7 +661,6 @@ matrix &Solver::UpdateDz() {
                 CD_dt * (Phi_ez_xp(i, j) - dm.Jz(i, j));
         }
     }
-    spdlog::debug("dz +x ok");
 
     // 非PML
 #pragma omp parallel for collapse(2)
@@ -530,8 +670,6 @@ matrix &Solver::UpdateDz() {
                            CD_dt * dm.Jz(i, j);
         }
     }
-
-    spdlog::debug("dz x ok");
 
     // y
     // 负PML
@@ -545,7 +683,6 @@ matrix &Solver::UpdateDz() {
                            CD_dt * Phi_ez_yn(i, j);
         }
     }
-    spdlog::debug("dz -y ok");
 
     // 正PML
 #pragma omp parallel for collapse(2)
@@ -562,7 +699,6 @@ matrix &Solver::UpdateDz() {
                 CD_dt * Phi_ez_yp(i, j);
         }
     }
-    spdlog::debug("dz +y ok");
 
     // 非PML
 #pragma omp parallel for collapse(2)
@@ -571,12 +707,9 @@ matrix &Solver::UpdateDz() {
             dm.Dz(i, j) -= CD_dt_dy * (dm.Hx(i, j) - dm.Hx(i, j - 1));
         }
     }
-    spdlog::debug("dz y ok");
-
-    return dm.Dz;
 }
 
-matrix &Solver::UpdateSource() {
+void Solver::UpdateSource() {
     // double sin_current = 1600;
     // double cos_current = 1600;
     double sin_current = dm.I * sin(2 * Const::PI * dm.f * dm.time);
@@ -609,8 +742,22 @@ matrix &Solver::UpdateSource() {
     // -cos
     dm.Jz(cr1, cc1) = -cos_current;
     dm.Jz(cr2, cc1) = -cos_current;
+}
 
-    spdlog::debug("source ok");
+void Solver::TMz() {
+    UpdateDz();
+    CalculateEz();
+    UpdateBx();
+    UpdateBy();
+    CalculateHx();
+    CalculateHy();
+};
 
-    return dm.Jz;
+void Solver::TEz() {
+    UpdateBz();
+    CalculateHz();
+    UpdateDx();
+    UpdateDy();
+    CalculateEx();
+    CalculateEy();
 }
