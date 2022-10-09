@@ -156,7 +156,7 @@ void Output<Mixin>::Launch() {
                   << dm.num_ts << std::flush;
         Mixin::StepForward();
 
-        OutputDat();
+        // OutputDat();
     }
 
     std::cout << "\nCalculate complete\n";

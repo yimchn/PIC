@@ -6,6 +6,7 @@
 #include "geometry.h"
 #include "output.h"
 #include "solver.h"
+#include "timer.h"
 
 int main(int argc, char* argv[]) {
     // spdlog::set_level(spdlog::level::debug);
@@ -24,10 +25,9 @@ int main(int argc, char* argv[]) {
     Domain dm(geo, I, f);
     dm.setTime(dt, step);
     Solver solver(dm, 1e5, 1e-6);
-
     Output<Solver> out(dm, 1e5, 1e-6);
 
-    out.Launch();
+    TIMING(Output<Solver> out(dm, 1e5, 1e-6); out.Launch();, "FDTD TMz Elapsed time: ");
 
     return 0;
 }
